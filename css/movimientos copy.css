@@ -1,0 +1,155 @@
+/* ========== MOVIMIENTOS.CSS ========== */
+
+/* ====== General ====== */
+body {
+    background-color: #1e1e1e;
+    color: #d2d6de; /* Color de texto AdminLTE */
+    font-family: "Source Sans Pro", sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* ====== Contenido Principal ====== */
+.content {
+    width: calc(100% - 250px); /* Ajuste según el sidebar */
+    margin-left: 250px;
+    padding: 20px;
+    background-color: #222;
+    border-radius: 10px;
+    transition: margin-left 0.3s ease-in-out, width 0.3s ease-in-out;
+}
+
+/* 🔹 Sidebar Ajustable */
+.app-sidebar {
+    position: fixed;
+    width: 250px;
+    height: 100vh;
+    background: #222d32; /* Color AdminLTE */
+    transition: width 0.3s ease-in-out;
+    padding-top: 20px;
+    overflow: hidden;
+    z-index: 1000;
+    cursor: pointer; /* Permite colapsarlo haciendo clic */
+}
+
+/* 🔹 Sidebar colapsado */
+.app-sidebar.collapsed {
+    width: 70px;
+}
+
+/* Ajuste del contenido cuando el sidebar está colapsado */
+.app-sidebar.collapsed + .content {
+    width: calc(100% - 70px);
+    margin-left: 70px;
+}
+
+/* ====== Títulos y Etiquetas ====== */
+h1.text-primary {
+    color: #ccc; /* Cambiado de azul a gris claro */
+}
+
+h5.text-primary {
+    color: #ccc; /* Cambiado de azul a gris claro */
+}
+
+/* ====== Logo en Sidebar ====== */
+.logo-container {
+    text-align: center;
+    padding: 10px;
+}
+
+.logo-container img {
+    max-width: 120px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+
+/* ====== Botones ====== */
+.btn {
+    font-size: 14px;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+    padding: 8px 12px;
+}
+
+/* 🔹 Botones de mes */
+.btn-month {
+    background-color: #444; /* Gris oscuro */
+    color: white;
+    border: none;
+}
+
+.btn-month:hover {
+    background-color: #555;
+}
+
+/* 🔹 Botones de acción */
+.btn-secondary, .btn-success, .btn-primary {
+    background-color: #444; /* Gris oscuro */
+    color: white;
+    border: none;
+    padding: 10px 15px;
+}
+
+.btn-secondary:hover, .btn-success:hover, .btn-primary:hover {
+    background-color: #555;
+}
+
+/* Icono de Excel en botón */
+.icono-excel {
+    width: 18px;
+    height: 18px;
+    margin-right: 5px;
+    vertical-align: middle;
+}
+
+/* ====== Tabla ====== */
+.table-container {
+    background-color: #2a2a2a;
+    padding: 15px;
+    border-radius: 8px;
+    width: 100%;
+    box-shadow: 0 4px 10px rgba(255, 255, 255, 0.1);
+}
+
+.table {
+    width: 100%;
+    color: white;
+    border-collapse: collapse;
+}
+
+.table th {
+    background-color: #444;
+    color: white;
+    padding: 10px;
+}
+
+.table td {
+    background-color: #333;
+    padding: 8px;
+}
+
+/* ====== Ajustes Responsivos ====== */
+@media (max-width: 768px) {
+    .content {
+        width: 100%;
+        margin-left: 0;
+        padding: 10px;
+    }
+
+    .app-sidebar {
+        width: 80px;
+    }
+
+    .actions-container {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+/* ====== Ajuste del contenido con Sidebar ====== */
+.app-sidebar.collapsed + .content {
+    width: calc(100% - 80px);
+    margin-left: 80px;
+}

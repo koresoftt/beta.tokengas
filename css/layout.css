@@ -1,0 +1,49 @@
+/* Estilos del menú superior */
+.topbar {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+    background-color: var(--primary-bg);
+    color: var(--primary-color);
+    padding: 10px;
+}
+
+/* Estilos del menú lateral */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 200px;
+    background-color: var(--primary-bg);
+    color: var(--primary-color);
+    padding-top: 20px;
+    z-index: 1000;
+}
+
+.sidebar .menu {
+    list-style-type: none;
+    padding: 0;
+}
+
+.sidebar .menu li {
+    margin: 15px 0;
+}
+
+.sidebar .menu li a {
+    color: var(--primary-color);
+    text-decoration: none;
+    padding: 10px 15px;
+    display: block;
+}
+
+.sidebar .menu li a:hover {
+    background-color: var(--hover-color);
+}
+
+/* Ajuste del contenido principal */
+.content {
+    margin-left: 220px;
+    padding: 20px;
+}

@@ -1,0 +1,28 @@
+/* Reset y estilos generales */
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-bg: #333;
+    --primary-color: white;
+    --hover-color: #575757;
+    --button-color: #007bff;
+    --button-hover-color: #0056b3;
+    --box-shadow: rgba(0, 0, 0, 0.2);
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: url('../assets/tg.jpeg') no-repeat center center fixed;
+    background-size: cover;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+

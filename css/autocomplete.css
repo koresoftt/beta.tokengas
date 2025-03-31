@@ -1,0 +1,19 @@
+/* Estilos para el autocompletado */
+.ui-autocomplete {
+    background: white;
+    border: 1px solid #ccc;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000; /* Asegura que esté sobre otros elementos */
+    font-size: 14px;
+}
+
+.ui-menu-item {
+    padding: 8px;
+    cursor: pointer;
+}
+
+.ui-menu-item:hover {
+    background-color: #007bff;
+    color: white;
+}

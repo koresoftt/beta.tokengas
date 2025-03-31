@@ -1,0 +1,48 @@
+/* Archivo CSS para hacer responsivo el diseño */
+
+/* Ajustes generales */
+body {
+    background-color: #1e1e1e;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 1rem;
+  }
+  
+  h1 {
+    text-align: center;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+  }
+  
+  /* Contenedor del gráfico responsivo */
+  #chart {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  /* Ajustar tamaño del gráfico según pantalla */
+  @media (max-width: 768px) {
+    #chart {
+      height: 300px;
+    }
+  
+    h1 {
+      font-size: 1.2rem;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    #chart {
+      height: 300px;
+    }
+  
+    h1 {
+      font-size: 1rem;
+    }
+  
+    body {
+      padding: 0.5rem;
+    }
+  }

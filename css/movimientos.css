@@ -1,0 +1,167 @@
+/* ========== MOVIMIENTOS.CSS ========== */
+
+/* ====== General ====== */
+body {
+    background-color: #343a40; /* Fondo oscuro de AdminLTE */
+    color: #c2c7d0; /* Color de texto AdminLTE */
+    font-family: "Source Sans Pro", sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* 🔹 Sidebar colapsado */
+.app-sidebar.collapsed {
+    width: 70px;
+}
+
+/* Ajuste del contenido cuando el sidebar está colapsado */
+.app-sidebar.collapsed + .content {
+    width: calc(100% - 70px);
+    margin-left: 70px;
+}
+
+/* ====== Títulos y Etiquetas ====== */
+h1.text-primary,
+h5.text-primary {
+    color: #ffffff; /* Blanco para que resalte en el fondo oscuro */
+}
+
+/* ========== MOVIMIENTOS.CSS ========== */
+
+/* ====== Botones ====== */
+.btn {
+    font-size: 14px;
+    border-radius: 0.25rem; /* Bordes ligeramente redondeados (similar a Bootstrap) */
+    transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out; /* Transiciones suaves */
+    padding: 0.375rem 0.75rem; /* Padding estándar de Bootstrap */
+    line-height: 1.5; /* Altura de línea para legibilidad */
+}
+
+/* 🔹 Botones de mes */
+.btn-month {
+    background-color: #e9ecef; /* Fondo gris claro */
+    color: #495057; /* Color de texto gris oscuro */
+    border: 1px solid #ced4da; /* Borde gris claro */
+}
+
+.btn-month:hover {
+    background-color: #dee2e6; /* Fondo gris ligeramente más oscuro al pasar el ratón */
+    border-color: #adb5bd; /* Borde gris ligeramente más oscuro al pasar el ratón */
+}
+
+/* 🔹 Botones de acción (Misma combinación que botones de mes) */
+.btn-secondary,
+.btn-success,
+.btn-primary {
+    background-color: #e9ecef; /* Fondo gris claro (igual que .btn-month) */
+    color: #495057; /* Color de texto gris oscuro (igual que .btn-month) */
+    border: 1px solid #ced4da; /* Borde gris claro (igual que .btn-month) */
+    padding: 0.5rem 1rem; /* Padding un poco mayor para botones de acción */
+}
+
+.btn-secondary:hover,
+.btn-success:hover,
+.btn-primary:hover {
+    background-color: #dee2e6; /* Fondo gris ligeramente más oscuro al pasar el ratón (igual que .btn-month:hover) */
+    border-color: #adb5bd; /* Borde gris ligeramente más oscuro al pasar el ratón (igual que .btn-month:hover) */
+}
+
+/* Icono de Excel en botón */
+.icono-excel {
+    width: 18px;
+    height: 18px;
+    margin-right: 5px;
+    vertical-align: middle;
+}
+
+/* Icono de Excel en botón */
+.icono-excel {
+    width: 18px;
+    height: 18px;
+    margin-right: 5px;
+    vertical-align: middle;
+}
+
+
+
+
+
+
+/* ====== Tabla ====== */
+.movimientos-table-container {
+    background-color: #ffffff; /* Fondo blanco */
+    border-radius: 8px; /* Bordes redondeados */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Sombra ligera */
+    overflow: hidden; /* Asegura bordes redondeados en la tabla */
+}
+
+#movimientos-table {
+    width: 100%;
+    color: #343a40; /* Color de texto principal AdminLTE */
+    border-collapse: collapse;
+}
+
+#movimientos-table th,
+#movimientos-table td {
+    padding: 12px 15px; /* Espaciado interno de celdas */
+    text-align: left;
+}
+
+#movimientos-table th {
+    background-color: #e9ecef; /* Fondo gris claro para encabezados */
+    font-weight: 600; /* Texto semi-negrita para encabezados */
+    border-bottom: 2px solid #dee2e6; /* Borde inferior para separar encabezados */
+}
+
+#movimientos-table tr:nth-child(even) {
+    background-color: #f8f9fa; /* Fondo gris muy claro para filas pares */
+}
+
+#movimientos-table td {
+    border-bottom: 1px solid #dee2e6; /* Borde inferior para separar filas */
+}
+
+/* Responsividad para tablas en pantallas pequeñas */
+@media (max-width: 768px) {
+    #movimientos-table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+}
+
+/* ====== Ajustes Responsivos ====== */
+@media (max-width: 768px) {
+    .content {
+        width: 100%;
+        margin-left: 0;
+        padding: 10px;
+    }
+
+    .actions-container {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+/* ====== Ajuste del contenido con Sidebar ====== */
+.app-sidebar.collapsed + .content {
+    width: calc(100% - 80px);
+    margin-left: 80px;
+}
+
+
+/* Asegurar que los textos dentro de 'text-light' sean negros */
+.text-light {
+    color: black !important; /* Usar !important para asegurar la prioridad */
+}
+
+/* Si quieres ser más específico, puedes usar selectores más precisos: */
+h1.text-light,
+h5.text-light,
+label.text-light,
+select.text-light,
+option.text-light,
+span.text-light {
+    color: black !important;
+}
