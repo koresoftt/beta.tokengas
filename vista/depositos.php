@@ -5,7 +5,7 @@
  * 1. Maneja peticiones AJAX (companies / companyContracts).
  * 2. Verifica la sesión (opcional).
  * 3. Muestra la página con diseño AdminLTE.
-<0xC2><0xA0;*/
+*/
 
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -19,7 +19,7 @@ $dotenv->load();
 session_start();
 
 // Modificación: Eliminar la lógica de beta y forzar producción.
-$apiBase = 'https://api.ationet.com';
+$apiBase = 'https://api-beta.ationet.com';
 
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'companies') {
   header('Content-Type: application/json');

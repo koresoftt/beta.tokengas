@@ -8,7 +8,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // Incluir el token_handler (asegúrate de que la ruta sea correcta)
-require_once __DIR__ . '../auth/token_handler.php';
+require_once __DIR__ . '/auth/token_handler.php';
 
 // Generar token CSRF si aún no existe
 if (!isset($_SESSION['csrf_token'])) {
@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // 1) Llamada inicial a la API para validar las credenciales del usuario
-    $url = "https://api.ationet.com/Token";
+    $url = "https://api-beta.ationet.com/Token";
     $postData = http_build_query([
         "grant_type" => "password",
         "username"    => $correo,
@@ -78,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['access_token'] = $correctAccessToken;
 
         // Redireccionar al dashboard
-        header("Location: /tokengas/vista/dashboard.php");
+        header("Location: vista/dashboard.php");
         exit;
     } else {
         // Si las credenciales no son válidas, se guarda un mensaje de error y se redirige al formulario
@@ -94,11 +94,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <title>Iniciar Sesión</title>
-    <link rel="stylesheet" href="/tokengas/css/style.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div class="login-container">
-        <img src="/tokengas/assets/logo_tg1.png" alt="Logo de Tokengas" class="logo" width="150">
+        <img src="assets/logo_tg1.png" alt="Logo de Tokengas" class="logo" width="150">
         <form method="POST" action="index.php">
             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']); ?>">
             <input type="text" name="username" id="username" placeholder="Usuario" required>

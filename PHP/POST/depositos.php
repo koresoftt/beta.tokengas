@@ -28,7 +28,7 @@ $ationetPass = $_ENV['ATIONET_PASS'] ?? '';
 $authorization = "Basic {$ationetUser}:{$ationetPass}";
 
 // Endpoint
-$url = "https://native.ationet.com/v1/Interface";
+$url = "https://native-beta.ationet.com/v1/Interface";
 
 // Preparar JSON a enviar
 $jsonData = json_encode($data);
@@ -56,7 +56,7 @@ if (curl_errno($ch)) {
 }
 curl_close($ch);
 
-// Responder siempre en JSON
+// Responder siempre JSON
 header('Content-Type: application/json');
 
 if (isset($error_msg)) {

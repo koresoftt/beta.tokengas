@@ -13,8 +13,8 @@ function obtenerAccessToken() {
     // Obtener credenciales desde .env
     $username = $_ENV['ATIONET_USER'] ?? null;
     $password = $_ENV['ATIONET_PASS'] ?? null;
-    $entityId = $_ENV['ENTITIESP'] ?? null; // Entidad para producción
-    $apiUrl = 'https://api.ationet.com/Token'; // URL de producción
+    $entityId = $_ENV['ENTITIESB'] ?? null; // Entidad para producción
+    $apiUrl = 'https://api-beta.ationet.com/Token'; // URL de producción
     
     if (!$username || !$password || !$entityId) {
         logMessage("Credenciales o entidad no configuradas en .env", 'ERROR');

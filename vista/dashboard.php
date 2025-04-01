@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['access_token'])) {
-    header("Location: /tokengas/index.php");
+    header("Location: /../index.php");
     exit();
 }
 ?>
@@ -106,7 +106,7 @@ if (!isset($_SESSION['access_token'])) {
                     <div class="col-md-4">
                       <div class="info-box">
                         <span class="info-box-icon">
-                          <img src="/tokengas/assets/Gasverde.png" alt="Gasolina Regular" style="width: 96px; height: 96px;">
+                          <img src="../assets/Gasverde.png" alt="Gasolina Regular" style="width: 96px; height: 96px;">
                         </span>
                         <div class="info-box-content">
                           <span class="info-box-text">Regular</span>
@@ -125,7 +125,7 @@ if (!isset($_SESSION['access_token'])) {
                     <div class="col-md-4">
                       <div class="info-box">
                         <span class="info-box-icon">
-                          <img src="/tokengas/assets/Gasroja.png" alt="Gasolina Premium" style="width: 96px; height: 96px;">
+                          <img src="../assets/Gasroja.png" alt="Gasolina Premium" style="width: 96px; height: 96px;">
                         </span>
                         <div class="info-box-content">
                           <span class="info-box-text">Premium</span>
@@ -143,7 +143,7 @@ if (!isset($_SESSION['access_token'])) {
                     <div class="col-md-4">
                       <div class="info-box">
                         <span class="info-box-icon">
-                          <img src="/tokengas/assets/Gasnegra.png" alt="Gasolina Diesel" style="width: 96px; height: 96px;">
+                          <img src="../assets/Gasnegra.png" alt="Gasolina Diesel" style="width: 96px; height: 96px;">
                         </span>
                         <div class="info-box-content">
                           <span class="info-box-text">Diesel</span>
@@ -170,7 +170,7 @@ if (!isset($_SESSION['access_token'])) {
 
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
-    <script src="/tokengas/js/adminlte.js"></script>
+    <script src="../js/adminlte.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.10.1/browser/overlayscrollbars.browser.es6.min.js"></script>
     <script>
       const SELECTOR_SIDEBAR_WRAPPER = '.sidebar-wrapper';
@@ -202,7 +202,7 @@ if (!isset($_SESSION['access_token'])) {
 
       // Consulta el endpoint y actualiza la vista
       function actualizarKPIs() {
-  fetch('/tokengas/PHP/procesar_kpis.php')
+  fetch('../PHP/procesar_kpis.php')
     .then(res => res.json())
     .then(data => {
       if (data.error) {

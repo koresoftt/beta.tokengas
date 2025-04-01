@@ -10,7 +10,7 @@ body {
 }
 
 body {
-    background-image: url('/tokengas/assets/tg.png'); /* Asegúrate de que la ruta sea correcta */
+    background-image: url('../assets/tg.png'); /* Asegúrate de que la ruta sea correcta */
     background-repeat: no-repeat;
     background-size: cover;
     background-position: center center;

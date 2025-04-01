@@ -155,7 +155,7 @@ $(function() {
     // -----------------------------------------------------
     function sendPayload(payload) {
         return $.ajax({
-            url: '/tokengas/php/post/depositos-beta.php',
+            url: '../php/post/depositos.php',
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(payload)

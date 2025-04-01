@@ -11,9 +11,16 @@ if (!isset($_SESSION['access_token'])) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Movimientos</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="/tokengas/css/movimientos.css">
-  <link rel="stylesheet" href="/tokengas/css/sidebar.css">
+  <link rel="icon" href="../assets/ICOTG.ico" type="image/x-icon">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/adminlte.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.10.1/styles/overlayscrollbars.min.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <link rel="stylesheet" href="../css/movimientos.css">
+  
   <!-- Estilos para Spinner, Filtros y Resumen -->
   <style>
     /* Spinner dentro de la tabla */
@@ -52,72 +59,102 @@ if (!isset($_SESSION['access_token'])) {
   </style>
 </head>
 <body>
-  <div class="d-flex">
-    <!-- Sidebar -->
-    <?php include __DIR__ . '/layout/sidebar.php'; ?>
-    <!-- Contenido principal -->
+
+
+<body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
+<div class="app-wrapper">
+    <nav class="app-header navbar navbar-expand bg-body">
+        <div class="container-fluid">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" data-lte-toggle="sidebar" href="#" role="button">
+                        <i class="bi bi-list"></i> </a>
+                
+        </div>
+    </nav>
+
+    <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
+        <div class="sidebar-wrapper">
+            <nav class="mt-2">
+                <?php include __DIR__ . '/layout/sidebar.php'; ?>
+            </nav>
+        </div>
+    </aside>
+    <div class="app-main">
+ <!-- Contenido principal -->
     <main class="content p-4">
       <div id="movimientos">
         <h1 class="text-light">Movimientos</h1>
-        <!-- Selección de año -->
+        <!-- Año y Mes en la misma línea -->
         <div class="d-flex justify-content-between align-items-center mb-3">
-          <div>
-            <h5 class="text-light">Selecciona el año:</h5>
-            <select id="select-anio" class="form-select w-auto">
-              <option value="2025" selected>2025</option>
-              <option value="2024">2024</option>
-            </select>
-          </div>
-        </div>
-        <!-- Botones de mes y controles de filtro -->
-        <div class="mb-3 d-flex justify-content-between align-items-center">
-          <div>
-            <h5 class="text-light">Selecciona un mes:</h5>
-            <div class="d-flex flex-wrap gap-2 align-items-center">
-              <?php
-              $meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-              foreach ($meses as $index => $mes) {
-                  $mesNum = str_pad($index + 1, 2, "0", STR_PAD_LEFT);
-                  echo "<button class='btn btn-month' data-mes='$mesNum'>$mes</button>";
-              }
-              ?>
-              <!-- Botón de filtro (inicialmente deshabilitado) -->
-              <button id="btn-filter" class="btn btn-outline-secondary" title="Filtrar" disabled>
-                <ion-icon name="search-outline"></ion-icon>
-              </button>
-              <!-- Input de filtro (inicialmente oculto y deshabilitado) -->
-              <input type="text" id="tabla-filtro" class="form-control" placeholder="Filtrar..." disabled>
-              <!-- Select para filtrar por resultado (inicialmente deshabilitado) -->
-              <div class="d-flex align-items-center">
-                <label for="resultadoFiltro" class="text-light me-2 mb-0">Filtrar por resultado:</label>
-                <select id="resultadoFiltro" class="form-select w-auto" style="max-width: 100px;" disabled>
-                  <option value="todos" selected>Todos</option>
-                  <option value="✅">✅</option>
-                  <option value="⚠️">⚠️</option>
-                  <option value="❌">❌</option>
-                </select>
+          <div class="d-flex align-items-center gap-4">
+            <!-- Año -->
+            <div class="d-flex align-items-center gap-2">
+              <h5 class="text-light mb-0">Año:</h5>
+              <select id="select-anio" class="form-select w-auto">
+                <option value="2025" selected>2025</option>
+                <option value="2024">2024</option>
+              </select>
+            </div>
+            <!-- Mes -->
+            <div>
+              <h5 class="text-light mb-0">Mes:</h5>
+              <div class="d-flex flex-wrap gap-2 align-items-center">
+                <?php
+                $meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+                foreach ($meses as $index => $mes) {
+                    $mesNum = str_pad($index + 1, 2, "0", STR_PAD_LEFT);
+                    echo "<button class='btn btn-month' data-mes='$mesNum'>$mes</button>";
+                }
+                ?>
+                <!-- Botón de filtro (inicialmente deshabilitado) -->
+                <button id="btn-filter" class="btn btn-outline-secondary" title="Filtrar" disabled>
+                  <ion-icon name="search-outline"></ion-icon>
+                </button>
+                <!-- Input de filtro (inicialmente oculto y deshabilitado) -->
+                <input type="text" id="tabla-filtro" class="form-control" placeholder="Filtrar..." disabled>
+                <!-- Select para filtrar por resultado (inicialmente deshabilitado) -->
+                <div class="d-flex align-items-center">
+                  <label for="resultadoFiltro" class="text-light me-2 mb-0">Resultado:</label>
+                  <select id="resultadoFiltro" class="form-select w-auto" style="max-width: 100px;" disabled>
+                    <option value="todos" selected>Todos</option>
+                    <option value="✅">✅</option>
+                    <option value="⚠️">⚠️</option>
+                    <option value="❌">❌</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
           <button id="ver-logs-btn" class="btn btn-warning" disabled>Log</button>
         </div>
-        <!-- Resumen de resultados con icono de refresco a la derecha -->
+        <!-- Resumen con icono de refresco y botones de Guardar/Recuperar Avances -->
         <div id="resumenResultados" class="mb-3 d-flex justify-content-between align-items-center text-light">
           <div>
             <span id="ingresoTotalVerificado">Ingreso total verificado: $0.00</span>
             <span id="comisionesCobradas" class="ms-3">Comisiones Cobradas: $0.00</span>
           </div>
-          <!-- Icono de refresco para actualizar el resumen y buscar nuevos movimientos -->
-          <span id="refreshSummary" title="Buscar nuevos movimientos">
-            <ion-icon name="refresh-outline"></ion-icon>
-          </span>
+          <div>
+            <!-- Icono para actualizar (buscar nuevos movimientos) -->
+            <span id="refreshSummary" title="Buscar nuevos movimientos" class="me-3">
+              <ion-icon name="refresh-outline"></ion-icon>
+            </span>
+            <!-- Botón para guardar avances -->
+            <button id="guardarAvances" class="btn btn-success btn-sm" title="Guardar avances">
+              <ion-icon name="save-outline"></ion-icon>
+            </button>
+            <!-- Botón para recuperar avances -->
+            <button id="recuperarAvances" class="btn btn-info btn-sm ms-2" title="Recuperar avances">
+              <ion-icon name="cloud-download-outline"></ion-icon>
+            </button>
+          </div>
         </div>
         <!-- Tabla de movimientos -->
         <div class="table-container mt-4">
           <div class="d-flex justify-content-end mb-3">
             <button id="cargar-csv-btn" class="btn btn-secondary me-2">Cargar CSV</button>
             <button id="exportar-excel-btn" class="btn btn-success me-2">
-              <img src="/tokengas/assets/icono_excel.png" alt="Exportar a Excel" class="icono-excel"> Exportar
+              <img src="../assets/icono_excel.png" alt="Exportar a Excel" class="icono-excel"> Exportar
             </button>
             <button id="generar-poliza-btn" class="btn btn-primary">Generar Póliza</button>
           </div>
@@ -159,14 +196,29 @@ if (!isset($_SESSION['access_token'])) {
   <!-- Scripts externos -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-  <script defer src="/tokengas/js/sidebar.js"></script>
+  <script defer src="../js/adminlte.js"></script>
   <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
-  <script src="/tokengas/js/mostrarmovimientos.js"></script>
-  <script src="/tokengas/js/compararmovimentos.js"></script>
-  <script src="/tokengas/js/recompararmovimientos.js"></script>
-  <script src="/tokengas/js/cargarCSV.js"></script>
-  <script src="/tokengas/js/generarpoliza.js"></script>
+  <script src="../js/mostrarmovimientos.js"></script>
+  <script src="../js/compararmovimentos.js"></script>
+  <script src="../js/recompararmovimientos.js"></script>
+  <script src="../js/cargarCSV.js"></script>
+  <script src="../js/generarpoliza.js"></script>
   <script>
+    // Evitamos redeclarar 'mesSeleccionado' si ya existe
+    if (typeof window.mesSeleccionado === "undefined") {
+      window.mesSeleccionado = null;
+    }
+
+    // Asignar evento a los botones de mes
+    document.querySelectorAll(".btn-month").forEach(button => {
+      button.addEventListener("click", function() {
+        window.mesSeleccionado = this.getAttribute("data-mes");
+        document.querySelectorAll(".btn-month").forEach(btn => btn.classList.remove("active"));
+        this.classList.add("active");
+        // Opcional: actualizar la tabla automáticamente si lo deseas
+      });
+    });
+
     // Función para fusionar movimientos nuevos con los guardados en localStorage.
     function fusionarMovimientos(nuevosMovimientos) {
       let movimientosGuardados = JSON.parse(localStorage.getItem("movimientosData")) || [];
@@ -182,19 +234,42 @@ if (!isset($_SESSION['access_token'])) {
       return movimientosGuardados;
     }
 
-    // Función para cargar movimientos desde localStorage
-    function cargarPersistencia() {
-      const movimientosGuardados = JSON.parse(localStorage.getItem("movimientosData")) || [];
-      if (movimientosGuardados.length > 0) {
-        mostrarMovimientos(movimientosGuardados);
+    // Función para guardar avances manualmente (utilizando movimientosProcesadosAPI)
+    function guardarAvances() {
+  if (window.movimientosProcesadosAPI && window.movimientosProcesadosAPI.length > 0) {
+    localStorage.setItem("movimientosData", JSON.stringify(window.movimientosProcesadosAPI));
+    alert("Avances guardados");
+  } else {
+    alert("No hay avances para guardar");
+  }
+}
+
+
+    // Función para recuperar avances manualmente
+    function recuperarAvances() {
+      const data = localStorage.getItem("movimientosData");
+      if (data) {
+        const movimientosGuardados = JSON.parse(data);
+        if (movimientosGuardados.length > 0) {
+          mostrarMovimientos(movimientosGuardados);
+          alert("Avances recuperados");
+        } else {
+          alert("No hay avances guardados");
+        }
+      } else {
+        alert("No hay avances guardados");
       }
     }
 
-    // Actualizar movimientos: obtiene nuevos desde la API y los fusiona
+    // Asignar eventos a los botones de guardar y recuperar avances
+    document.getElementById("guardarAvances").addEventListener("click", guardarAvances);
+    document.getElementById("recuperarAvances").addEventListener("click", recuperarAvances);
+
+    // Actualizar movimientos: obtener nuevos desde la API y fusionarlos sin borrar lo ya existente
     function actualizarMovimientos() {
       const anio = document.getElementById("select-anio").value;
-      const mes = mesSeleccionado || "01"; // Asegúrate de que 'mesSeleccionado' se actualice al hacer clic en los botones de mes
-      const url = /PHP/APImovimientos.php?accion=obtener_movimientos&mes=${mes}&year=${anio};
+      const mes = window.mesSeleccionado || "01";
+      const url = `/PHP/APImovimientos.php?accion=obtener_movimientos&mes=${mes}&year=${anio}`;
       fetch(url)
         .then(response => response.json())
         .then(data => {
@@ -212,7 +287,7 @@ if (!isset($_SESSION['access_token'])) {
         });
     }
 
-    // Al hacer clic en el icono de refresco en el resumen, se busca actualizar (agregar nuevos movimientos)
+    // Al hacer clic en el icono de refresco en el resumen, se actualizan los movimientos (se agregan nuevos)
     document.getElementById("refreshSummary").addEventListener("click", () => {
       actualizarMovimientos();
     });
@@ -225,7 +300,8 @@ if (!isset($_SESSION['access_token'])) {
       filas.forEach(fila => {
         if (fila.id === "spinner-row") return;
         const textoFila = fila.textContent.toLowerCase();
-        const resultadoCelda = fila.cells[6] && fila.cells[6].childNodes[0] ? fila.cells[6].childNodes[0].textContent.trim() : "";
+        const resultadoCelda = fila.cells[6] && fila.cells[6].childNodes[0]
+          ? fila.cells[6].childNodes[0].textContent.trim() : "";
         const coincideTexto = textoFila.includes(textoFiltro);
         const coincideResultado = (resultadoFiltro === "todos" || resultadoCelda === resultadoFiltro);
         fila.style.display = (coincideTexto && coincideResultado) ? "" : "none";
@@ -238,7 +314,7 @@ if (!isset($_SESSION['access_token'])) {
       return parseFloat(str.replace(/[$,]/g, '')) || 0;
     }
 
-    // Función para calcular y actualizar el resumen, considerando solo las filas visibles
+    // Función para calcular y actualizar el resumen (sólo filas visibles)
     function calcularResumen() {
       let ingresoTotal = 0;
       let comisiones = 0;
@@ -246,7 +322,8 @@ if (!isset($_SESSION['access_token'])) {
         fila => fila.id !== "spinner-row" && window.getComputedStyle(fila).display !== "none"
       );
       filas.forEach(fila => {
-        const resultado = fila.cells[6] && fila.cells[6].childNodes[0] ? fila.cells[6].childNodes[0].textContent.trim() : "";
+        const resultado = fila.cells[6] && fila.cells[6].childNodes[0]
+          ? fila.cells[6].childNodes[0].textContent.trim() : "";
         if (resultado === "✅") {
           const montoText = fila.cells[5] ? fila.cells[5].textContent.trim() : "0";
           const monto = parseCurrency(montoText);
@@ -279,7 +356,7 @@ if (!isset($_SESSION['access_token'])) {
     document.getElementById('csvInput').addEventListener('change', (event) => {
       const archivoCSV = event.target.files[0];
       if (archivoCSV) {
-        console.log(Archivo seleccionado: ${archivoCSV.name});
+        console.log(`Archivo seleccionado: ${archivoCSV.name}`);
         if (typeof uploadCSV === "function") {
           uploadCSV(event);
         } else {
@@ -300,7 +377,7 @@ if (!isset($_SESSION['access_token'])) {
     });
     // Botón Log: preparar Excel y mostrar modal personalizado
     document.getElementById("ver-logs-btn").addEventListener("click", () => {
-      if (movimientosEstructurados.length === 0) {
+      if (window.movimientosProcesadosAPI === undefined || window.movimientosProcesadosAPI.length === 0) {
         alert("No hay movimientos detallados para exportar.");
         return;
       }
@@ -311,7 +388,7 @@ if (!isset($_SESSION['access_token'])) {
         "Total Comisiones ATIO", "Saldo Total Banco", "Saldo Total ATIO",
         "Saldo Final Ajustado", "Resultado"
       ]);
-      movimientosEstructurados.forEach(item => {
+      window.movimientosProcesadosAPI.forEach(item => {
         data.push([
           item.movimiento,
           item.fecha,
@@ -341,7 +418,7 @@ if (!isset($_SESSION['access_token'])) {
         }
       }
       XLSX.utils.book_append_sheet(wb, ws, "Logs");
-      const filename = Logs_Movimientos_${new Date().toISOString().slice(0, 10)}.xlsx;
+      const filename = `Logs_Movimientos_${new Date().toISOString().slice(0, 10)}.xlsx`;
       document.getElementById("downloadExcelBtn").onclick = () => {
         XLSX.writeFile(wb, filename);
         document.getElementById("logModal").style.display = "none";
@@ -370,9 +447,9 @@ if (!isset($_SESSION['access_token'])) {
       const workbook = XLSX.utils.book_new();
       const worksheet = XLSX.utils.table_to_sheet(tabla, { raw: true });
       XLSX.utils.book_append_sheet(workbook, worksheet, "Movimientos");
-      const nombreArchivo = Movimientos_${new Date().toISOString().slice(0, 10)}.xlsx;
+      const nombreArchivo = `Movimientos_${new Date().toISOString().slice(0, 10)}.xlsx`;
       XLSX.writeFile(workbook, nombreArchivo);
-      alert(Movimientos exportados correctamente como '${nombreArchivo}'.);
+      alert(`Movimientos exportados correctamente como '${nombreArchivo}'.`);
     }
     document.getElementById("exportar-excel-btn").addEventListener("click", exportarMovimientosAExcel);
     // Eventos para los controles de filtro: input y select
@@ -392,7 +469,7 @@ if (!isset($_SESSION['access_token'])) {
         aplicarFiltros();
       }
     });
-    // Observador para habilitar/deshabilitar controles de filtro y recalcular resumen según el contenido del tbody
+    // Observador para habilitar/deshabilitar controles de filtro y recalcular el resumen según el contenido del tbody
     const movementsList = document.getElementById("movements-list");
     const observer = new MutationObserver(() => {
       const filas = Array.from(movementsList.querySelectorAll("tr")).filter(fila => fila.id !== "spinner-row");
@@ -403,8 +480,9 @@ if (!isset($_SESSION['access_token'])) {
       calcularResumen();
     });
     observer.observe(movementsList, { childList: true });
-    // Al cargar la página, si hay datos persistidos, se muestran
+    // Al cargar la página, si hay datos persistidos, se muestran (esto es opcional, ya que indicas que la recuperación es manual)
     window.addEventListener("load", () => {
+      // Si prefieres no cargar automáticamente, comenta o elimina este bloque
       if (localStorage.getItem("movimientosData")) {
         const movimientosGuardados = JSON.parse(localStorage.getItem("movimientosData"));
         if (movimientosGuardados.length > 0) {
@@ -413,5 +491,14 @@ if (!isset($_SESSION['access_token'])) {
       }
     });
   </script>
+
+     </div>
+
+    <footer class="app-footer">
+    </footer>
+</div>
+  
+  
+   
 </body>
 </html>

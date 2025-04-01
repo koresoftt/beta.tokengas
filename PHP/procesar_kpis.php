@@ -31,7 +31,7 @@ $fechaHoy = $dtInicio->format('Y/m/d');
 
 // Función para construir la URL de consulta
 function buildUrl($fecha, $horaActual) {
-    return "https://api.ationet.com/Transactions"
+    return "https://api-beta.ationet.com/Transactions"
         . "?dateTimeFrom=" . urlencode("$fecha 00:00:00")
         . "&dateTimeTo=" . urlencode("$fecha $horaActual");
 }
