@@ -210,105 +210,153 @@ $(function() {
         : $.Deferred().reject().promise()
     );
 
-   // ——— EJECUTAR PETICIONES ———
+  // ——— EJECUTAR PETICIONES ———
   function executeRequests(description) {
-    $sendButton.prop('disabled', true);
+    $sendButton.prop("disabled", true);
     const totalGlobal = parseNumber($totalInput.val());
     const calls = [];
-    const pagoActivo = $commissionSwitch.is(':checked');
-    const $selectedRows = $contractsTbody.find('.contratoCheck:checked').closest('tr');
-
-    // 1) Pago de Comisión 100%
+    const pagoActivo = $commissionSwitch.is(":checked");
+    const $selectedRows = $contractsTbody.find(".contratoCheck:checked").closest("tr");
+    let totalDepositosParaComision = 0;
+    let calcularComisionSobreTotal = false;
+    let codigoBaseComision = null; // Código del contrato para calcular la comisión (si aplica)
+  
+    // — Pago de Comisión: 2 POSTs con el total —
     if (pagoActivo) {
       if ($selectedRows.length !== 1) {
-        $sendButton.prop('disabled', false);
-        return Swal.fire('Error', 'Para Pago de Comisión, selecciona un solo contrato', 'warning');
+        $sendButton.prop("disabled", false);
+        return Swal.fire("Error", "Para Pago de Comisión, selecciona un solo contrato", "warning");
       }
+  
       const $row = $selectedRows.first();
-      const code = $row.data('code');
-      const companyCode = $row.data('companyCode');
+      const code = $row.attr("data-code");
+      const companyCode = $row.attr("data-company-code");
       if (!code || !companyCode) {
-        $sendButton.prop('disabled', false);
-        return Swal.fire('Error', 'No se pudo leer el contrato. Refresca la lista.', 'error');
+        $sendButton.prop("disabled", false);
+        return Swal.fire("Error", "No se pudo leer el contrato. Refresca la lista.", "error");
       }
+  
       $row.find('.monto-input').val(formatCurrency(totalGlobal));
-      calls.push(sendPayload({ SubscriberCode: '2F4', ActionCode: 906, CompanyCode: companyCode, ContractCode: code, Amount: totalGlobal, CurrencyCode: 'MXN', Description: `TB-${description}` }));
-      calls.push(sendPayload({ SubscriberCode: '2F4', ActionCode: 907, CompanyCode: companyCode, ContractCode: code, Amount: totalGlobal, CurrencyCode: 'MXN', Description: `COMTB-${description}` }));
+  
+      calls.push(sendPayload({
+        SubscriberCode: "2F4",
+        ActionCode: 906,
+        CompanyCode: companyCode,
+        ContractCode: code,
+        Amount: totalGlobal,
+        CurrencyCode: "MXN",
+        Description: `TB-${description}`
+      }));
+  
+      calls.push(sendPayload({
+        SubscriberCode: "2F4",
+        ActionCode: 907,
+        CompanyCode: companyCode,
+        ContractCode: code,
+        Amount: totalGlobal,
+        CurrencyCode: "MXN",
+        Description: `COMTB-${description}`
+      }));
+  
       return $.when(...calls)
-        .then(() => Swal.fire('Éxito', 'Pago de comisión registrado', 'success').then(resetForm))
-        .fail(() => Swal.fire('Error', 'Falló el registro', 'error'))
-        .always(() => $sendButton.prop('disabled', false));
+        .then(() => Swal.fire("Éxito", "Pago de comisión registrado", "success").then(resetForm))
+        .fail(() => Swal.fire("Error", "Falló el registro", "error"))
+        .always(() => $sendButton.prop("disabled", false));
     }
-
-    // 2) Depósitos múltiples
-    const $includeRow = $contractsTbody.find('.incluyeComisionCheck:checked').closest('tr');
-
-    if ($includeRow.length) {
-      // 2.1) POST de depósito por cada contrato seleccionado
-      $selectedRows.each(function() {
-        const $r = $(this);
-        const monto = parseNumber($r.find('.monto-input').val());
-        if (!monto) return;
-        const code = $r.data('code');
-        const companyCode = $r.data('companyCode');
-        calls.push(sendPayload({ SubscriberCode: '2F4', ActionCode: 906, CompanyCode: companyCode, ContractCode: code, Amount: monto, CurrencyCode: 'MXN', Description: `TB-${description}` }));
-      });
-      // 2.2) Calcular comisión+IVA sobre totalGlobal y asociar al contrato marcado
-      const codeIncl = $includeRow.data('code');
-      const companyIncl = $includeRow.data('companyCode');
-      const pctIncl = parseInt((codeIncl.split('-')[1]||'00').substring(0,2),10)/10/100;
-      const base = totalGlobal / (1 + pctIncl * 1.16);
-      const com = parseFloat((totalGlobal - base).toFixed(2));
-      calls.push(sendPayload({ SubscriberCode: '2F4', ActionCode: 907, CompanyCode: companyIncl, ContractCode: codeIncl, Amount: com, CurrencyCode: 'MXN', Description: `COM${description}` }));
-    } else {
-      // 3) Depósitos múltiples sin incluir comisión+IVA
-      // 3.1) POST de depósito por cada contrato seleccionado
-      $selectedRows.each(function() {
-        const $r = $(this);
-        const monto = parseNumber($r.find('.monto-input').val());
-        if (!monto) return;
-        const code = $r.data('code');
-        const companyCode = $r.data('companyCode');
+  
+  
+    // — Incluye Comisión + IVA —
+    const $incl = $contractsTbody.find(".incluyeComisionCheck:checked").closest("tr");
+    if ($incl.length) {
+      // Aquí la lógica de "Incluye Comisión + IVA" parece calcular la comisión individualmente.
+      // Si la nueva lógica de comisión sobre el total también debe aplicar aquí, necesitarías revisarla.
+      const code = $incl.attr("data-code");
+      const companyCode = $incl.attr("data-company-code");
+      const montoTotal = parseNumber($incl.find(".monto-input").val());
+      const segment = (code.split("-")[1] || "00").substring(0, 2);
+      const pct = parseInt(segment, 10) / 10 / 100;
+      const factor = 1 + pct * 1.16;
+      const base = montoTotal / factor;
+      const comision = parseFloat((montoTotal - base).toFixed(2));
+      calls.push(sendPayload({
+        SubscriberCode: "2F4", ActionCode: 906,
+        CompanyCode: companyCode, ContractCode: code,
+        Amount: montoTotal, CurrencyCode: "MXN",
+        Description: `TB-${description}`
+      }));
+      calls.push(sendPayload({
+        SubscriberCode: "2F4", ActionCode: 907,
+        CompanyCode: companyCode, ContractCode: code,
+        Amount: comision, CurrencyCode: "MXN",
+        Description: `COM${description}`
+      }));
+      return $.when(...calls)
+        .then(() => Swal.fire("Éxito", "Depósito y comisión registrados", "success").then(resetForm))
+        .fail(() => Swal.fire("Error", "Falló el registro", "error"))
+        .always(() => $sendButton.prop("disabled", false));
+    }
+  
+    // — Caso normal: múltiples contratos —
+    $selectedRows.each(function () {
+      const $r = $(this);
+      const monto = parseNumber($r.find(".monto-input").val());
+      const code = $r.attr("data-code");
+      const companyCode = $r.attr("data-company-code");
+  
+      if (monto) {
+        totalDepositosParaComision += monto; // Acumular el total de los depósitos
+  
         calls.push(sendPayload({
-          SubscriberCode: '2F4',
-          ActionCode: 906,
-          CompanyCode: companyCode,
-          ContractCode: code,
-          Amount: monto,
-          CurrencyCode: 'MXN',
+          SubscriberCode: "2F4", ActionCode: 906,
+          CompanyCode: companyCode, ContractCode: code,
+          Amount: monto, CurrencyCode: "MXN",
           Description: `TB-${description}`
         }));
-      });
-      // 3.2) Calcular y enviar comisión SOBRE totalGlobal si al menos un contrato la marca
-      const $commRow = $contractsTbody.find('.comisionCheck:checked').closest('tr').first();
-      if ($commRow.length) {
-        const codeComm = $commRow.data('code');
-        const companyComm = $commRow.data('companyCode');
-        const pct = parseInt((codeComm.split('-')[1]||'00').substring(0,2),10)/10/100;
-        const com = parseFloat((totalGlobal * pct * 1.16).toFixed(2));
+  
+        if ($r.find(".comisionCheck").is(":checked") && !calcularComisionSobreTotal) {
+          // Si la casilla de comisión está marcada en algún contrato,
+          // activamos la bandera para calcular la comisión sobre el total
+          calcularComisionSobreTotal = true;
+          codigoBaseComision = code; // Usamos el código del primer contrato con comisión marcada como base
+        }
+      }
+    });
+  
+    // Calcular y registrar la comisión SOBRE EL TOTAL de los depósitos (si se activó la bandera)
+    if (calcularComisionSobreTotal && totalDepositosParaComision > 0 && codigoBaseComision) {
+      const segment = (codigoBaseComision.split("-")[1] || "00").substring(0, 2);
+      const pct = parseInt(segment, 10) / 10 / 100;
+      const baseComisionTotal = totalDepositosParaComision * pct;
+      const ivaComisionTotal = baseComisionTotal * 0.16;
+      const comisionTotal = parseFloat((baseComisionTotal + ivaComisionTotal).toFixed(2));
+  
+      if (comisionTotal > 0) {
+        // Asumimos que la comisión se asocia al primer contrato seleccionado para simplificar
+        const primerContrato = $selectedRows.first();
         calls.push(sendPayload({
-          SubscriberCode: '2F4',
+          SubscriberCode: "2F4",
           ActionCode: 907,
-          CompanyCode: companyComm,
-          ContractCode: codeComm,
-          Amount: com,
-          CurrencyCode: 'MXN',
-          Description: `COM${description}`
+          CompanyCode: primerContrato.attr("data-company-code"),
+          ContractCode: primerContrato.attr("data-code"),
+          Amount: comisionTotal,
+          CurrencyCode: "MXN",
+          Description: `COM${description}-TOTAL`
         }));
       }
     }
+  
     return $.when(...calls)
-      .then(() => Swal.fire('Éxito', 'Depósitos registrados', 'success').then(resetForm))
-      .fail(() => Swal.fire('Error', 'Falló el registro', 'error'))
-      .always(() => $sendButton.prop('disabled', false));
+      .then(() => Swal.fire("Éxito", "Depósitos registrados", "success").then(resetForm))
+      .fail(() => Swal.fire("Error", "Falló el registro", "error"))
+      .always(() => $sendButton.prop("disabled", false));
   }
+
 
   // ——— RESET FORMULARIO ———
   function resetForm() {
     $commissionSwitch.prop('checked', false).trigger('change');
     $companyInput.val('').removeData('companyId');
     $totalInput.val('');
-    $selectAll.prop('checked', false).prop('disabled', false);
     
     $('#tbExtra').val('');
     const now = new Date();
@@ -342,7 +390,6 @@ $(function() {
       return Swal.fire('Error',`Falta asignar (${formatCurrency(recalcSaldo())})`,'warning');
     }
 
-    
     // validar número vacío
     if (extraEmpty) {
       return Swal.fire({
@@ -357,52 +404,21 @@ $(function() {
     confirmCommissionAndRun();
 
     function confirmCommissionAndRun() {
+      // si no es pago de comisión, hay contratos con comisión y no marcó checkbox
       const needsComm = $contractsTbody.find('tr')
-        .filter((_, r) => $(r).data('requires-commission') && $(r).find('.contratoCheck').is(':checked')).length > 0;
-      const markedComm = $contractsTbody.find('.comisionCheck:checked').length > 0;
-      const $incluyeRow = $contractsTbody.find('.incluyeComisionCheck:checked').closest('tr');
-    
-      // 🚨 Validación si "Depósito con Comisión" está marcado
-      if ($incluyeRow.length) {
-        const total = parseNumber($totalInput.val());
-        const codeIncl = $incluyeRow.data('code');
-        const pctIncl = parseInt((codeIncl.split('-')[1] || '00').substring(0, 2), 10) / 10 / 100;
-        const base = total / (1 + pctIncl * 1.16);
-        const com = parseFloat((total - base).toFixed(2));
-        const neto = parseFloat(base.toFixed(2));
-    
-        return Swal.fire({
-          icon: 'info',
-          title: 'Depósito con Comisión',
-          html: `
-            <b>Total ingresado:</b> $${formatCurrency(total)}<br>
-            <b>Monto neto:</b> $${formatCurrency(neto)}<br>
-            <b>Comisión + IVA:</b> $${formatCurrency(com)}<br><br>
-            ¿Deseas continuar?
-          `,
-          showCancelButton: true,
-          confirmButtonText: 'Sí, enviar',
-          cancelButtonText: 'No, revisar'
-        }).then(r => {
-          if (r.isConfirmed) executeRequests(desc);
-        });
-      }
-    
-      // Validación si se requiere comisión y no se marcó checkbox
+        .filter((_,r)=>$(r).data('requires-commission') && $(r).find('.contratoCheck').is(':checked')).length>0;
+      const markedComm = $contractsTbody.find('.comisionCheck:checked').length>0;
       if (!$commissionSwitch.is(':checked') && needsComm && !markedComm) {
         return Swal.fire({
-          icon: 'warning',
-          title: 'Falta aplicar comisión',
-          text: '¿Continuar sin incluirla?',
-          showCancelButton: true,
-          confirmButtonText: 'Sí, continuar',
-          cancelButtonText: 'No, revisar'
-        }).then(r => { if (r.isConfirmed) executeRequests(desc); });
+          icon:'warning',
+          title:'Falta aplicar comisión',
+          text:'¿Continuar sin incluirla?',
+          showCancelButton:true,
+          confirmButtonText:'Sí, continuar',
+          cancelButtonText:'No, revisar'
+        }).then(r=>{ if(r.isConfirmed) executeRequests(desc); });
       }
-    
-      // Si no aplica ninguna condición anterior, ejecuta normalmente
       executeRequests(desc);
     }
-    
   });
 });

@@ -172,29 +172,39 @@ if (!isset($_SESSION['access_token'])) {
                             <div class="card-body">
                                 <h1 class="mb-4">Depósitos</h1>
                                 <div class="mb-3">
-                                    <label for="compania" class="form-label">Compañía:</label>
-                                    <input type="text" id="compania" class="form-control d-inline-block w-auto" placeholder="Escribe el nombre de la compañía...">
-                                    <label for="total" class="form-label ms-3">Total:</label>
-                                    <input type="text" id="total" class="form-control d-inline-block w-auto">
-                                    <!-- Indicador visual para búsqueda dentro del autocomplete -->
-                                    <div id="loadingIndicator" style="display:none;">Buscando...</div>
+                                <label for="compania" class="form-label">Compañía:</label>
+                                <input type="text" id="compania" class="form-control d-inline-block w-25" placeholder="Escribe el nombre de la compañía...">
+                                
+                                <label for="total" class="form-label ms-3">Total:</label>
+                                <input type="text" id="total" class="form-control d-inline-block w-auto">
+                                
+                                <!-- Switch para Pago de Comisión -->
+                                <div class="form-check form-switch d-inline-block ms-3 align-middle">
+                                    <input class="form-check-input" type="checkbox" id="pagoComisionSwitch">
+                                    <label class="form-check-label" for="pagoComisionSwitch">Pago de Comisión</label>
+                                </div>
+
+                                <!-- Indicador visual para búsqueda -->
+                                <div id="loadingIndicator" style="display:none;">Buscando...</div>
                                 </div>
                                 <div class="mb-3">
                                     <span class="me-2">TB -</span>
                                     <input type="text" id="tbFecha" class="form-control d-inline-block w-auto" value="<?php date_default_timezone_set('America/Mazatlan'); echo date('dmY'); ?>">
-                                    <input type="text" id="tbExtra" placeholder="10 caracteres" maxlength="10" class="form-control d-inline-block w-auto ms-3">
-                                </div>
-                                <h3 id="saldo">Saldo: 0.00</h3>
+                                    <input type="text" id="tbExtra"  maxlength="10" class="form-control d-inline-block w-auto ms-3">
+                                </div>  
+                                <h3 id="saldo">Saldo: $ 0.00</h3>
                                 <div id="companyCount" class="mt-3 fw-bold"></div>
                                 <div class="table-responsive mt-3">
                                     <table class="table table-bordered table-striped table-hover align-middle mb-0">
                                         <thead>
                                             <tr>
-                                                <th></th>
+                                                <th><input type="checkbox" id="seleccionarTodos"></th>
                                                 <th>ID Contrato</th>
                                                 <th>Nombre Contrato</th>
                                                 <th>Monto</th>
                                                 <th>Comisión</th>
+                                                <th>Deposito con Comisión</th>
+
                                             </tr>
                                         </thead>
                                         <tbody id="tbodyContratos">

@@ -3,3 +3,31 @@
     Order allow,deny
     Deny from all
 </FilesMatch>
+
+# Habilitar rewrite engine
+RewriteEngine On
+
+# Permitir acceso directo a los archivos en PHP/POST/ - regla más específica primero
+RewriteRule ^PHP/POST/ - [L]
+
+# Permitir acceso directo a los archivos PHP existentes
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule \.php$ - [L]
+
+# Reglas para el resto del sitio (si necesitas un front controller)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]
+
+# Habilitar registro detallado de errores PHP
+php_flag display_errors Off
+php_value error_reporting E_ALL
+php_flag log_errors On
+
+# Intentar varias opciones para el error_log hasta encontrar una que funcione
+# Opción 1: Registrar en el directorio de logs del servidor (más probable que funcione)
+php_value error_log logs/php_errors.log
+# Opción 2: Registrar en el directorio de logs del hosting (alternativa común)
+# php_value error_log ../logs/php_errors.log
+# Opción 3: Usar la ubicación estándar de logs de Apache
+# php_value error_log /var/log/php_errors.log
