@@ -108,3 +108,21 @@ input[type="password"]:focus {
         width: 120px;
     }
 }
+
+@media (max-width: 360px) {
+    .login-container {
+        padding: 15px;
+        max-width: 90%;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+        font-size: 14px;
+        padding: 10px;
+    }
+
+    .login-btn {
+        font-size: 14px;
+        padding: 12px;
+    }
+}

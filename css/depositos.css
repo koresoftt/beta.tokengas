@@ -1,36 +1,97 @@
-/* Ajustes para la tabla en Depositos */
+/* --- Estilos para la tabla --- */
 .table-responsive {
   margin-top: 1.5rem;
 }
 
-/* Aplica un fondo oscuro y bordes coherentes */
 .table {
-  background-color: #343a40; /* Fondo de la tabla */
-  color: #fff; /* Texto blanco */
-  border: 1px solid #4b545c; /* Borde general */
+  background-color: #343a40;
+  color: #fff;
+  border: 1px solid #4b545c;
 }
 
-/* Bordes de celdas */
 .table-bordered > :not(caption) > * {
   border: 1px solid #4b545c;
 }
 
-/* Estilo de encabezado */
 .table thead {
-  background-color: #444; /* Fondo del header */
+  background-color: #444;
   color: #fff;
 }
+
 .table thead th {
   border-bottom: 2px solid #4b545c;
   font-weight: bold;
 }
 
-/* Filas alternas */
 .table-striped tbody tr:nth-of-type(odd) {
   background-color: #3a3f44;
 }
 
-/* Hover en filas */
 .table-hover tbody tr:hover {
   background-color: #4a4f54;
+}
+
+/* --- Alineación de campos y comportamiento responsivo --- */
+.tb-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.tb-group span {
+  white-space: nowrap;
+}
+
+.tb-group input {
+  width: auto;
+}
+
+/* SOLO MÓVIL */
+@media (max-width: 768px) {
+  .mb-3 {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.75rem;
+  }
+
+  .form-label {
+    margin-top: 0.5rem;
+  }
+
+  #compania,
+  #total,
+  #tbFecha,
+  #tbExtra {
+    width: 100% !important;
+  }
+
+  .form-check.form-switch {
+    flex-direction: row;
+    justify-content: flex-start;
+    margin-top: 0.25rem;
+  }
+
+  #saldo {
+    text-align: center;
+    margin-top: 1rem;
+  }
+
+  #btnEnviar {
+    margin-top: 1rem;
+    width: 100%;
+  }
+
+  /* ✅ Alinea los inputs de fecha uno debajo del otro */
+  .tb-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .tb-group input {
+    width: 100% !important;
+  }
+
+  .tb-group span.me-2 {
+    margin-bottom: 0.25rem;
+  }
 }

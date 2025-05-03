@@ -76,13 +76,16 @@ if (!isset($_SESSION['access_token'])) {
     <!-- Navbar -->
     <nav class="app-header navbar navbar-expand bg-body">
       <div class="container-fluid">
-        <ul class="navbar-nav">
-          <li class="nav-item">
-            <a class="nav-link" data-lte-toggle="sidebar" href="#" role="button">
-              <i class="bi bi-list"></i>
-            </a>
-          </li>
-        </ul>
+      <ul class="navbar-nav ms-auto">
+  <li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle fw-semibold" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+      <?php echo htmlspecialchars($_SESSION['name'] ?? 'Invitado'); ?>
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end">
+      <li><a class="dropdown-item text-danger" href="/beta.tokengas/logout.php">Cerrar sesión</a></li>
+    </ul>
+  </li>
+</ul>
       </div>
     </nav>
     <!-- Sidebar -->

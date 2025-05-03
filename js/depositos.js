@@ -64,18 +64,38 @@ $(function() {
 
   // ——— FORMATO DE TOTAL ———
   $totalInput
-    .attr({ type: 'text', inputmode: 'decimal' })
-    .on('keypress', e => { if (!/[0-9.]|\b/.test(e.key)) e.preventDefault(); })
-    .on('blur input', function(e) {
-      let val = parseNumber($(this).val());
-      if (val < 0) val = 0;
-      if (e.type === 'blur') $(this).val(formatCurrency(val));
-      recalcSaldo();
-      const companyId = $companyInput.data('companyId');
-      if (val > 0 && companyId) {
-        $.getJSON(`?ajax=companyContracts&companyId=${companyId}`, renderContracts);
-      }
-    });
+  .attr({ type: 'text', inputmode: 'decimal' })
+  .on('input blur paste', function(e) {
+    let raw = $(this).val();
+
+    if (e.type === 'paste') {
+      e.preventDefault();
+      raw = (e.originalEvent || e).clipboardData.getData('text/plain');
+    }
+
+    // Limpiar: solo números y un punto decimal
+    let cleaned = raw.replace(/[^0-9.]/g, '');
+    const parts = cleaned.split('.');
+    if (parts.length > 2) {
+      cleaned = parts[0] + '.' + parts[1];
+    }
+
+    let val = parseNumber(cleaned);
+    if (val < 0) val = 0;
+
+    if (e.type === 'blur' || e.type === 'paste') {
+      $(this).val(formatCurrency(val));
+    } else {
+      $(this).val(cleaned);
+    }
+
+    recalcSaldo();
+
+    const companyId = $companyInput.data('companyId');
+    if (val > 0 && companyId) {
+      $.getJSON(`?ajax=companyContracts&companyId=${companyId}`, renderContracts);
+    }
+  });
 
   // ——— RENDERIZAR CONTRATOS ———
   function renderContracts(contracts) {
@@ -91,7 +111,7 @@ $(function() {
           <td><input type="checkbox" class="contratoCheck"></td>
           <td>${c.Code}</td>
           <td>${c.ContractDescription}</td>
-          <td><input type="text" class="monto-input form-control form-control-sm" disabled></td>
+<td><input type="text" class="monto-input form-control form-control-sm" disabled inputmode="decimal" pattern="[0-9]*" /></td>
           <td><input type="checkbox" class="comisionCheck" disabled></td>
           <td><input type="checkbox" class="incluyeComisionCheck" disabled title="Depósito incluye comisión e IVA"></td>
         </tr>`;
@@ -127,12 +147,37 @@ $(function() {
       $(this).val(formatCurrency(recalcSaldo()));
       recalcSaldo();
     })
-    .on('input blur', '.monto-input', function(e) {
-      if (e.type === 'blur') {
-        $(this).val(formatCurrency(parseNumber($(this).val())));
+    .on('input blur paste', '.monto-input', function(e) {
+      let raw = $(this).val();
+    
+      // Si es evento de pegado, usa el valor del portapapeles
+      if (e.type === 'paste') {
+        e.preventDefault();
+        const paste = (e.originalEvent || e).clipboardData.getData('text/plain');
+        raw = paste;
       }
+    
+      // Limpiar $ y comas, dejar solo números y un punto
+      let cleaned = raw.replace(/[^0-9.]/g, '');
+    
+      // Solo un punto decimal permitido
+      const parts = cleaned.split('.');
+      if (parts.length > 2) {
+        cleaned = parts[0] + '.' + parts[1];
+      }
+    
+      const numeric = parseNumber(cleaned);
+    
+      // Mostrar formateado si es blur o paste
+      if (e.type === 'blur' || e.type === 'paste') {
+        $(this).val(formatCurrency(numeric));
+      } else {
+        $(this).val(cleaned);
+      }
+    
       recalcSaldo();
     })
+    
     .on('click', '.comisionCheck', function() {
       $contractsTbody.find('.comisionCheck').not(this).prop('checked', false);
       $contractsTbody.find('.incluyeComisionCheck').prop('checked', false);

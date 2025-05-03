@@ -71,17 +71,32 @@ if (!isset($_SESSION['access_token'])) {
 </head>
 <body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
   <div class="app-wrapper">
-    <nav class="app-header navbar navbar-expand bg-body">
-      <div class="container-fluid">
-        <ul class="navbar-nav">
-          <li class="nav-item">
-            <a class="nav-link" data-lte-toggle="sidebar" href="#" role="button">
-              <i class="bi bi-list"></i>
-            </a>
-          </li>
+  <nav class="app-header navbar navbar-expand bg-body">
+  <div class="container-fluid">
+
+    <!-- Botón para mostrar el sidebar -->
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" data-lte-toggle="sidebar" href="#" role="button">
+          <i class="bi bi-list"></i>
+        </a>
+      </li>
+    </ul>
+
+    <!-- Nombre del usuario y opción de cerrar sesión -->
+    <ul class="navbar-nav ms-auto">
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle fw-semibold" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <?php echo htmlspecialchars($_SESSION['name'] ?? 'Invitado'); ?>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item text-danger" href="/tokengas/logout.php">Cerrar sesión</a></li>
         </ul>
-      </div>
-    </nav>
+      </li>
+    </ul>
+
+  </div>
+</nav>
 
     <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
       <div class="sidebar-wrapper">
@@ -167,7 +182,7 @@ if (!isset($_SESSION['access_token'])) {
     </div>
 
     <footer class="app-footer"></footer>
-
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
     <script src="../js/adminlte.js"></script>
