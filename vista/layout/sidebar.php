@@ -16,6 +16,12 @@
                 <p>Inicio</p>
             </a>
         </li>
+        <li class="nav-item">
+            <a href="../vista/consultas.php" class="nav-link" data-lte-toggle="true">
+                <i class="bi bi-info-circle-fill"></i>
+                <p>Consultas</p>
+            </a>
+        </li>
 
         <li class="nav-item has-treeview">
             <a href="#" class="nav-link" data-lte-toggle="treeview">
@@ -45,6 +51,13 @@
             <a href="../vista/movimientos.php" class="nav-link" data-lte-toggle="true">
                 <i class="nav-icon bi bi-bar-chart-line"></i>
                 <p>Movimientos</p>
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a href="../vista/identificadores.php" class="nav-link" data-lte-toggle="true">
+                <i class="bi bi-key-fill"></i>
+                <p>Identificadores</p>
             </a>
         </li>
 

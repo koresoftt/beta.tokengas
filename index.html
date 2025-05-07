@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Formulario de Tarjetas NFC</title>
+  <style>
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
+    th { background-color: #f2f2f2; }
+    input[type="text"], input[type="number"] { width: 100%; }
+  </style>
+  <script>
+    function actualizarUID(rowId) {
+      fetch('uid.txt?cache=' + new Date().getTime())
+        .then(res => res.text())
+        .then(uid => {
+          const uidTrimmed = uid.trim();
+          if (uidTrimmed) {
+            document.getElementById('track-' + rowId).value = uidTrimmed;
+          }
+        });
+    }
+
+    function agregarFila() {
+      const tbody = document.getElementById("tbody-form");
+      const rowId = tbody.rows.length + 1;
+
+      const fila = tbody.insertRow();
+
+      const columnas = [
+        "TAG", "FLOTILLA", "TAG RFID", "CLASSIC", 
+        `<input type="text" name="contrato[]" value="100010101010-" required>`,
+        `<input type="text" name="etiqueta[]" value="1508-0000-0000-441${rowId}" required>`,
+        `<input type="text" id="track-${rowId}" name="track[]" readonly>`,
+        `<input type="number" name="nip[]" value="1234">`,
+        `<input type="checkbox" name="requiere_cambio[]" checked>`
+      ];
+
+      columnas.forEach((col, i) => {
+        const celda = fila.insertCell();
+        celda.innerHTML = col;
+      });
+
+      // Intenta leer el UID justo después de agregar
+      actualizarUID(rowId);
+    }
+
+    setInterval(() => {
+      const filas = document.querySelectorAll('[id^=track-]');
+      filas.forEach((campo) => {
+        const id = campo.id.split("-")[1];
+        actualizarUID(id);
+      });
+    }, 1000);
+  </script>
+</head>
+<body>
+
+  <h2>IDENTIFICADORES</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>TIPO</th> <!-- variable -->
+        <th>TIPO DE USO</th> <!-- fijo, no ocupa aparecer -->
+        <th>MODELO</th> <!-- variable -->
+        <th>PROGRAMA</th> <!-- variable -->
+        <th>CONTRATO</th> 
+        <th>ETIQUETA</th>
+        <th>TRACK (UID)</th>
+        <th>NIP</th>
+        <th>REQUIERE CAMBIO DE NIP</th>
+      </tr>
+    </thead>
+    <tbody id="tbody-form">
+      <!-- Se agregan con JS -->
+    </tbody>
+  </table>
+
+  <br>
+  <button onclick="agregarFila()">➕ Agregar tarjeta</button>
+
+  <br><br>
+  <button>Guardar</button>
+  <button>Cancelar</button>
+
+</body>
+</html>
