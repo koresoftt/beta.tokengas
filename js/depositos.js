@@ -110,7 +110,7 @@ $(function() {
         <tr data-company-code="${c.CompanyCode}" data-code="${c.Code}" data-requires-commission="${requiresComm}">
           <td><input type="checkbox" class="contratoCheck"></td>
           <td>${c.Code}</td>
-          <td>${c.ContractDescription}</td>
+          <td>${c.Description}</td>
 <td><input type="text" class="monto-input form-control form-control-sm" disabled inputmode="decimal" pattern="[0-9]*" /></td>
           <td><input type="checkbox" class="comisionCheck" disabled></td>
           <td><input type="checkbox" class="incluyeComisionCheck" disabled title="Depósito incluye comisión e IVA"></td>
@@ -383,8 +383,9 @@ $(function() {
     if (!anyChecked) {
       return Swal.fire('Error','Selecciona al menos un contrato','warning');
     }
-    if (recalcSaldo() !== 0) {
-      return Swal.fire('Error',`Falta asignar (${formatCurrency(recalcSaldo())})`,'warning');
+    const saldoActual = recalcSaldo();
+    if (Math.abs(saldoActual) > 0.01) {
+      return Swal.fire('Error', `Falta asignar (${formatCurrency(saldoActual)})`, 'warning');
     }
 
     
