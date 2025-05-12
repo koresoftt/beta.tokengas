@@ -11,90 +11,144 @@ $dotenv->load();
 session_start();
 $apiBase = 'https://api-beta.ationet.com';
 
+// 1) Autocomplete de compañías
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'companies') {
-    header('Content-Type: application/json');
+    header('Content-Type: application/json; charset=UTF-8');
+
     if (!isset($_SESSION['access_token'])) {
         echo json_encode(['error' => 'Token no encontrado en sesión']);
         exit;
     }
-    $accessToken = $_SESSION['access_token'];
-
-    $allCompanies = [];
-    $page = 1;
-    $limit = 50;
-    while (true) {
-        $ch = curl_init("{$apiBase}/companies?page={$page}&limit={$limit}");
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER => ["Authorization: Bearer $accessToken"]
-        ]);
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        if ($httpCode !== 200 || !$response) {
-            echo json_encode(['error' => 'Error al obtener compañías', 'httpCode' => $httpCode]);
-            exit;
-        }
-        $data = json_decode($response, true);
-        if (json_last_error() !== JSON_ERROR_NONE || !isset($data['Content'])) break;
-        $content = $data['Content'];
-        if (empty($content)) break;
-        $allCompanies = array_merge($allCompanies, $content);
-        $page++;
+    $token = $_SESSION['access_token'];
+    $term  = trim($_GET['term'] ?? '');
+    if ($term === '') {
+        echo json_encode([]);  // vació para no mostrar nada
+        exit;
     }
 
-    $searchTerm = isset($_GET['term']) ? mb_strtolower($_GET['term']) : '';
-    $results = [];
-    foreach ($allCompanies as $company) {
-        $id = $company['Id'] ?? null;
-        $name = $company['Name'] ?? '';
-        if ($searchTerm === '' || strpos(mb_strtolower($name), $searchTerm) !== false) {
-            $results[] = ['id' => $id, 'name' => $name];
-        }
+    // Llamada directa al endpoint correcto
+    $url = "{$apiBase}/Companies?search=" . urlencode($term);
+    $ch  = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HTTPHEADER     => [
+            "Authorization: Bearer {$token}",
+            "Accept: application/json"
+        ],
+    ]);
+    $resp = curl_exec($ch);
+    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($code !== 200) {
+        echo json_encode(['error' => "HTTP {$code} al buscar compañías"]);
+        exit;
     }
-    echo json_encode(empty($results) ? ['error' => 'No se encontraron coincidencias.'] : $results);
+
+    $json = json_decode($resp, true);
+    $list = $json['Content'] ?? [];
+
+    // Mapeo a {id,name}
+    $out = array_map(fn($c) => [
+        'id'   => $c['CompanyCode'],
+        'name' => $c['CompanyName'],
+    ], $list);
+
+    echo json_encode($out);
     exit;
 }
 
+// 2) Contratos por compañía
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'companyContracts') {
-    header('Content-Type: application/json');
-    $companyId = $_GET['companyId'] ?? '';
-    if (!$companyId) {
-        echo json_encode(['error' => 'No se especificó companyId']);
-        exit;
-    }
+    header('Content-Type: application/json; charset=UTF-8');
+
     if (!isset($_SESSION['access_token'])) {
         echo json_encode(['error' => 'Token no encontrado en sesión']);
         exit;
     }
-    $accessToken = $_SESSION['access_token'];
+    $companyId = trim($_GET['companyId'] ?? '');
+    if ($companyId === '') {
+        echo json_encode(['error' => 'Falta companyId']);
+        exit;
+    }
+    $token = $_SESSION['access_token'];
 
-    $ch = curl_init("{$apiBase}/CompanyContracts/?companyId={$companyId}");
+    $url = "{$apiBase}/CompanyContracts?companyCode=" . urlencode($companyId);
+    $ch  = curl_init($url);
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_HTTPHEADER => ["Authorization: Bearer $accessToken"]
+        CURLOPT_HTTPHEADER     => [
+            "Authorization: Bearer {$token}",
+            "Accept: application/json"
+        ],
     ]);
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $resp = curl_exec($ch);
+    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
-    if ($httpCode !== 200 || !$response) {
-        echo json_encode(['error' => 'Error al obtener contratos', 'httpCode' => $httpCode]);
+    if ($code !== 200) {
+        echo json_encode(['error' => "HTTP {$code} al obtener contratos"]);
         exit;
     }
-    $data = json_decode($response, true);
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        echo json_encode(['error' => 'Error al decodificar JSON de contratos']);
-        exit;
-    }
+
+    $data = json_decode($resp, true);
     echo json_encode($data['Content'] ?? []);
     exit;
 }
 
-if (!isset($_SESSION['access_token'])) {
-    header("Location: ../index.php");
-    exit();
+// 3) Validación de etiqueta o TRACK
+if (isset($_GET['ajax']) && $_GET['ajax'] === 'checkIdentificador') {
+    header('Content-Type: application/json; charset=UTF-8');
+
+    if (!isset($_SESSION['access_token'])) {
+        echo json_encode(['error' => 'Token no encontrado en sesión']);
+        exit;
+    }
+    $token = $_SESSION['access_token'];
+    $label = trim($_GET['label'] ?? '');
+    $track = trim($_GET['track'] ?? '');
+    if ($label === '' && $track === '') {
+        echo json_encode(['error' => 'Parámetro requerido']);
+        exit;
+    }
+
+    $page = 1; $found = false;
+    do {
+        $q = ['page' => $page, 'pageSize' => 100];
+        if ($label) $q['label']       = $label;
+        if ($track) $q['trackNumber'] = $track;
+
+        $url = "{$apiBase}/Identifications?" . http_build_query($q);
+        $ch  = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER     => [
+                "Authorization: Bearer {$token}",
+                "Accept: application/json"
+            ],
+        ]);
+        $resp = curl_exec($ch);
+        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        if ($code !== 200 || !$resp) break;
+
+        $data = json_decode($resp, true);
+        if (empty($data['Content'])) break;
+        foreach ($data['Content'] as $item) {
+            if (($label && $item['Label'] === $label) ||
+                ($track && $item['TrackNumber'] === $track)) {
+                $found = true;
+                break 2;
+            }
+        }
+        $page++;
+    } while (true);
+
+    echo json_encode(['exists' => $found]);
+    exit;
 }
+
+
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -178,5 +232,6 @@ if (!isset($_SESSION['access_token'])) {
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
 <script src="../js/identificadores.js"></script>
+
 </body>
 </html>

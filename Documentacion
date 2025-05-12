@@ -1,5 +1,14 @@
-VERSION 4.2.1
+VERSION 4.3.1
 
-* Mejoras en Responsivo
-* cerrar session
+Tabla para generar Json correctamente
+- Busca compañia y muestra los contratos asociados a la compañia
+- Etiquetas prellegadas para el contratom 
+- Lee correctamente Track
+- Nip y Req. Cambio de nip correctamente
+- Hereda al agregar renglon
+- Borra renglon correctamente
+- Agrega renglon correctamente
+
+
+
 

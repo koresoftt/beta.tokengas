@@ -1,95 +1,160 @@
-let filaCount = 0;
+// js/identificadores.js
+$(function () {
+  const apiUrl    = 'identificadores.php';
+  const $tbody    = $('#tablaIdentificadores tbody');
+  let lastUID     = '';
+  let activeUID   = null;
+  let rowCounter  = $tbody.find('tr').length || 1;
 
-const modelosPorTipo = {
-  TAQ: {
-    id: "946e5fa4-bf25-4690-9067-35dc78cbe8be",
-    description: "TAG ATIONET RFID",
-    requirePin: true,
-    requiresPINChange: true,
-    pinDigits: 4
-  },
-  TARJETA: {
-    id: "ac353a14-8fae-4679-9bc7-899c6e22db29", // reemplazar con ID real si cambia
-    description: "TARJETA ATIONET RFID",
-    requirePin: true,
-    requiresPINChange: false,
-    pinDigits: 4
-  }
-};
+  // — UTILIDADES para números/moneda —
+  const parseNumber = input =>
+    typeof input === 'number'
+      ? input
+      : parseFloat((input||'').toString().replace(/,/g,''))||0;
 
-function agregarFila() {
-  filaCount++;
-  const tbody = document.getElementById("tbody-form");
-  const rowId = filaCount;
-
-  const fila = document.createElement("tr");
-  fila.innerHTML = `
-    <td>
-      <select id="tipo-${rowId}" class="form-select" onchange="actualizarModeloPorTipo(${rowId})">
-        <option value="">-- Seleccione --</option>
-        <option value="TAQ">TAQ</option>
-        <option value="TARJETA">TARJETA</option>
-      </select>
-    </td>
-    <td>
-      <select id="contrato-${rowId}">
-        <option>-- Seleccione --</option>
-        <option value="1">Contrato A</option>
-        <option value="2">Contrato B</option>
-      </select>
-    </td>
-    <td><input type="text" id="etiqueta-${rowId}" oninput="generarPAN(${rowId})"></td>
-    <td><input type="text" id="track-${rowId}" readonly></td>
-    <td><input type="number" id="nip-${rowId}" value="1234"></td>
-    <td><input type="checkbox" id="pinchange-${rowId}" checked></td>
-    <td><button class="btn btn-danger btn-sm" onclick="this.closest('tr').remove()">🗑</button></td>
-  `;
-  tbody.appendChild(fila);
-  actualizarUID(rowId);
-}
-
-function actualizarModeloPorTipo(rowId) {
-  const tipo = document.getElementById(`tipo-${rowId}`).value;
-  const modelo = modelosPorTipo[tipo];
-
-  if (!modelo) return;
-
-  document.getElementById(`nip-${rowId}`).disabled = !modelo.requirePin;
-  document.getElementById(`pinchange-${rowId}`).checked = modelo.requiresPINChange;
-
-  let hidden = document.getElementById(`modelo-id-${rowId}`);
-  if (!hidden) {
-    hidden = document.createElement("input");
-    hidden.type = "hidden";
-    hidden.id = `modelo-id-${rowId}`;
-    hidden.name = "modeloId[]";
-    document.getElementById(`track-${rowId}`).closest("tr").appendChild(hidden);
-  }
-  hidden.value = modelo.id;
-}
-
-function generarPAN(rowId) {
-  const etiqueta = document.getElementById(`etiqueta-${rowId}`).value;
-  const panInput = document.getElementById(`pan-${rowId}`);
-  if (panInput) panInput.value = etiqueta.replace(/-/g, '');
-}
-
-function actualizarUID(rowId) {
-  fetch('uid.txt?cache=' + new Date().getTime())
-    .then(res => res.text())
-    .then(uid => {
-      const trackField = document.getElementById(`track-${rowId}`);
-      if (trackField && uid.trim()) {
-        trackField.value = uid.trim();
+  // — INICIALIZAR AUTOCOMPLETE en un input dado —
+  function initAutocomplete($input) {
+    if ($input.data('ui-autocomplete')) return;  // ya inicializado
+    $input.autocomplete({
+      delay: 300,
+      minLength: 1,
+      source(request, response) {
+        $.getJSON(`${apiUrl}?ajax=companies&term=${encodeURIComponent(request.term)}`)
+          .done(data => {
+            if (data.error) return response([{ label: data.error, value: '' }]);
+            const items = data.map(c => ({ label:c.name, value:c.name, companyId:c.id }));
+            response(items.length ? items : [{ label:'No se encontraron coincidencias',value:'' }]);
+          })
+          .fail(() => response([{ label:'Error de red',value:'' }]));
+      },
+      select(_, ui) {
+        const $row = $input.closest('tr');
+        $input.val(ui.item.value).data('companyId', ui.item.companyId);
+        loadContracts($row, ui.item.companyId);
+        return false;
       }
     });
-}
+  }
 
-setInterval(() => {
-  document.querySelectorAll('[id^=track-]').forEach(el => {
-    const id = el.id.split('-')[1];
-    actualizarUID(id);
+  // — CARGAR CONTRATOS en la fila dada —
+  function loadContracts($row, companyId) {
+    const $sel = $row.find('.contrato-select');
+    $sel.empty().append('<option value="">-- Selecciona contrato --</option>');
+    $.getJSON(`${apiUrl}?ajax=companyContracts&companyId=${encodeURIComponent(companyId)}`)
+      .done(data => {
+        if (data.error) {
+          $sel.append('<option value="">Error al cargar</option>');
+        } else {
+          data.forEach(c => {
+            $sel.append(`<option value="${c.Code}">${c.Code} – ${c.Description}</option>`);
+          });
+        }
+      })
+      .fail(() => $sel.append('<option value="">Error de red</option>'));
+  }
+
+  // — INICIAL: autocomplete en la primera fila —
+  initAutocomplete($tbody.find('.compania-autocomplete').first());
+
+  // — VALIDACIÓN ETIQUETA —
+  $tbody.on('blur', '.etiqueta-input', function() {
+    const $i = $(this), val = $i.val().replace(/[^0-9\-]/g,'');
+    if (!val) return;
+    $.getJSON(`${apiUrl}?ajax=checkIdentificador&label=${encodeURIComponent(val)}`)
+      .done(d => $i.val(val + (d.exists?' ❌':' ✅')))
+      .fail(()=> $i.val(val + ' ❌'));
   });
-}, 1000);
 
-window.agregarFila = agregarFila;
+  // — TRACK (UID) automático —
+  $(document)
+    .on('focus', '.uid-field', function(){ activeUID = this; })
+    .on('blur',  '.uid-field', function(){ activeUID = null; });
+
+  setInterval(() => {
+    if (!activeUID) return;
+    fetch('uid.txt?cache='+Date.now())
+      .then(r=>r.text()).then(txt=>{
+        const uid = txt.trim();
+        if (uid && uid !== lastUID) {
+          lastUID = uid;
+          const $u = $(activeUID).val(uid);
+          $.getJSON(`${apiUrl}?ajax=checkIdentificador&track=${encodeURIComponent(uid)}`)
+            .done(d=> $u.val(uid + (d.exists?' ❌':' ✅')))
+            .fail(()=> $u.val(uid + ' ❌'));
+        }
+      })
+      .catch(()=>{});
+  }, 1000);
+
+  // — actualizarModelo según TIPO —
+  window.actualizarModelo = sel => {
+    const v = sel.value.toUpperCase();
+    const row = sel.closest('tr');
+    row.querySelector('.modelo-input').value =
+      v==='TAG'      ? 'TAG ATIONET' :
+      v==='TARJETA'  ? 'TARJETA ATIONET' :
+                      '';
+  };
+
+  // — AGREGAR RENGLÓN —
+  window.agregarRenglon = function() {
+    rowCounter++;
+    const $last = $tbody.find('tr:last');
+    const $new  = $last.clone().attr('id','row-'+rowCounter);
+
+    // 1) Heredar TIPO, MODELO y PROGRAMA
+    const tipoVal   = $last.find('.tipo-select').val();
+    const modeloVal = $last.find('.modelo-input').val();
+    const progVal   = $last.find('.programa-select').val();
+    $new.find('.tipo-select').val(tipoVal);
+    $new.find('.modelo-input').val(modeloVal);
+    $new.find('.programa-select').val(progVal);
+
+    // 2) Tipo de uso fijo
+    $new.find('.tipo-uso-input').val('FLOTILLA');
+
+    // 3) Compañía y Contrato
+    const $globalComp  = $tbody.find('.compania-autocomplete').first();
+    const compVal      = $globalComp.val();
+    const compId       = $globalComp.data('companyId');
+    $new.find('.compania-autocomplete')
+        .val(compVal)
+        .data('companyId', compId);
+    const $globalCont  = $tbody.find('.contrato-select').first();
+    $new.find('.contrato-select')
+        .html($globalCont.html())
+        .val($globalCont.val());
+
+    // 4) Etiqueta secuencial
+    const parts  = $last.find('.etiqueta-input').val().split('-');
+    const suf    = parseInt(parts.pop(),10)+1;
+    const prefix = parts.join('-')+'-';
+    $new.find('.etiqueta-input')
+        .val(prefix + String(suf).padStart(4,'0'));
+
+    // 5) Limpiar UID
+    $new.find('.uid-field').val('');
+
+    // 6) NIP constante
+    $new.find('.nip-field').val('1234');
+
+    // 7) REQ. CAMBIO NIP siempre marcado
+    $new.find('.req-nip-checkbox').prop('checked', true);
+
+    // 8) Reactivar autocomplete en nueva fila
+    initAutocomplete($new.find('.compania-autocomplete'));
+
+    // 9) Insertar
+    $tbody.append($new);
+  };
+
+  // — ELIMINAR RENGLÓN —
+  window.borrarRenglones = function() {
+    const $rows = $tbody.find('tr');
+    if ($rows.length > 1) {
+      $rows.last().remove();
+      rowCounter--;  // opcional: mantener el contador en línea
+    }
+  };
+
+});
