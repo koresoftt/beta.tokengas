@@ -185,6 +185,7 @@
         items.push({
           NetworkId:            window.NETWORK_ID,
           UseType:              0,
+          State:                7,
           Type:                 tCfg.type,
           TypeModelId:          tCfg.typeModelId,
           TypeModelDescription: tCfg.typeModelDescription,

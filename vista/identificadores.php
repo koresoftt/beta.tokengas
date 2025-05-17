@@ -142,6 +142,7 @@ if (isset($_GET['ajax'])) {
             'NetworkId'             => $networkId,
             'UseType'               => 0,
             'Type'                  => $it['Type']                  ?? null,
+            'State'                 => $it['State']                 ?? 7,
             'TypeModelId'           => $it['TypeModelId']           ?? null,
             'TypeModelDescription'  => $it['TypeModelDescription']  ?? null,
             'ProgramId'             => $it['ProgramId']             ?? null,
