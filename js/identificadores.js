@@ -1,160 +1,247 @@
-// js/identificadores.js
-$(function () {
-  const apiUrl    = 'identificadores.php';
-  const $tbody    = $('#tablaIdentificadores tbody');
-  let lastUID     = '';
-  let activeUID   = null;
-  let rowCounter  = $tbody.find('tr').length || 1;
+;(function($){
+  $(function(){
 
-  // — UTILIDADES para números/moneda —
-  const parseNumber = input =>
-    typeof input === 'number'
-      ? input
-      : parseFloat((input||'').toString().replace(/,/g,''))||0;
+    let lastUID    = '';
+    let activeUID  = null;
+    let rowCounter = $('#tablaIdentificadores tbody tr').length || 1;
 
-  // — INICIALIZAR AUTOCOMPLETE en un input dado —
-  function initAutocomplete($input) {
-    if ($input.data('ui-autocomplete')) return;  // ya inicializado
-    $input.autocomplete({
-      delay: 300,
-      minLength: 1,
-      source(request, response) {
-        $.getJSON(`${apiUrl}?ajax=companies&term=${encodeURIComponent(request.term)}`)
-          .done(data => {
-            if (data.error) return response([{ label: data.error, value: '' }]);
-            const items = data.map(c => ({ label:c.name, value:c.name, companyId:c.id }));
-            response(items.length ? items : [{ label:'No se encontraron coincidencias',value:'' }]);
-          })
-          .fail(() => response([{ label:'Error de red',value:'' }]));
-      },
-      select(_, ui) {
-        const $row = $input.closest('tr');
-        $input.val(ui.item.value).data('companyId', ui.item.companyId);
-        loadContracts($row, ui.item.companyId);
-        return false;
-      }
-    });
-  }
-
-  // — CARGAR CONTRATOS en la fila dada —
-  function loadContracts($row, companyId) {
-    const $sel = $row.find('.contrato-select');
-    $sel.empty().append('<option value="">-- Selecciona contrato --</option>');
-    $.getJSON(`${apiUrl}?ajax=companyContracts&companyId=${encodeURIComponent(companyId)}`)
-      .done(data => {
-        if (data.error) {
-          $sel.append('<option value="">Error al cargar</option>');
-        } else {
-          data.forEach(c => {
-            $sel.append(`<option value="${c.Code}">${c.Code} – ${c.Description}</option>`);
-          });
+    // ── Autocomplete compañías ─────────────────────────────────
+    function initAutocomplete($input) {
+      if ($input.data('ui-autocomplete')) return;
+      $input.autocomplete({
+        delay: 300,
+        minLength: 1,
+        source(request, response) {
+          $.getJSON(`${window.API_URL}?ajax=companies&term=${encodeURIComponent(request.term)}`)
+            .done(data => {
+              if (data.error) return response([{ label: data.error, value: '' }]);
+              const items = data.map(c=>({
+                label: c.name,
+                value: c.name,
+                companyId: c.id
+              }));
+              response(items.length ? items : [{ label:'No se encontraron coincidencias', value:'' }]);
+            })
+            .fail(() => response([{ label:'Error de red', value:'' }]));
+        },
+        select(_, ui) {
+          const $row = $input.closest('tr');
+          $input.val(ui.item.value).data('companyId', ui.item.companyId);
+          loadContracts($row, ui.item.companyId);
+          return false;
         }
-      })
-      .fail(() => $sel.append('<option value="">Error de red</option>'));
-  }
-
-  // — INICIAL: autocomplete en la primera fila —
-  initAutocomplete($tbody.find('.compania-autocomplete').first());
-
-  // — VALIDACIÓN ETIQUETA —
-  $tbody.on('blur', '.etiqueta-input', function() {
-    const $i = $(this), val = $i.val().replace(/[^0-9\-]/g,'');
-    if (!val) return;
-    $.getJSON(`${apiUrl}?ajax=checkIdentificador&label=${encodeURIComponent(val)}`)
-      .done(d => $i.val(val + (d.exists?' ❌':' ✅')))
-      .fail(()=> $i.val(val + ' ❌'));
-  });
-
-  // — TRACK (UID) automático —
-  $(document)
-    .on('focus', '.uid-field', function(){ activeUID = this; })
-    .on('blur',  '.uid-field', function(){ activeUID = null; });
-
-  setInterval(() => {
-    if (!activeUID) return;
-    fetch('uid.txt?cache='+Date.now())
-      .then(r=>r.text()).then(txt=>{
-        const uid = txt.trim();
-        if (uid && uid !== lastUID) {
-          lastUID = uid;
-          const $u = $(activeUID).val(uid);
-          $.getJSON(`${apiUrl}?ajax=checkIdentificador&track=${encodeURIComponent(uid)}`)
-            .done(d=> $u.val(uid + (d.exists?' ❌':' ✅')))
-            .fail(()=> $u.val(uid + ' ❌'));
-        }
-      })
-      .catch(()=>{});
-  }, 1000);
-
-  // — actualizarModelo según TIPO —
-  window.actualizarModelo = sel => {
-    const v = sel.value.toUpperCase();
-    const row = sel.closest('tr');
-    row.querySelector('.modelo-input').value =
-      v==='TAG'      ? 'TAG ATIONET' :
-      v==='TARJETA'  ? 'TARJETA ATIONET' :
-                      '';
-  };
-
-  // — AGREGAR RENGLÓN —
-  window.agregarRenglon = function() {
-    rowCounter++;
-    const $last = $tbody.find('tr:last');
-    const $new  = $last.clone().attr('id','row-'+rowCounter);
-
-    // 1) Heredar TIPO, MODELO y PROGRAMA
-    const tipoVal   = $last.find('.tipo-select').val();
-    const modeloVal = $last.find('.modelo-input').val();
-    const progVal   = $last.find('.programa-select').val();
-    $new.find('.tipo-select').val(tipoVal);
-    $new.find('.modelo-input').val(modeloVal);
-    $new.find('.programa-select').val(progVal);
-
-    // 2) Tipo de uso fijo
-    $new.find('.tipo-uso-input').val('FLOTILLA');
-
-    // 3) Compañía y Contrato
-    const $globalComp  = $tbody.find('.compania-autocomplete').first();
-    const compVal      = $globalComp.val();
-    const compId       = $globalComp.data('companyId');
-    $new.find('.compania-autocomplete')
-        .val(compVal)
-        .data('companyId', compId);
-    const $globalCont  = $tbody.find('.contrato-select').first();
-    $new.find('.contrato-select')
-        .html($globalCont.html())
-        .val($globalCont.val());
-
-    // 4) Etiqueta secuencial
-    const parts  = $last.find('.etiqueta-input').val().split('-');
-    const suf    = parseInt(parts.pop(),10)+1;
-    const prefix = parts.join('-')+'-';
-    $new.find('.etiqueta-input')
-        .val(prefix + String(suf).padStart(4,'0'));
-
-    // 5) Limpiar UID
-    $new.find('.uid-field').val('');
-
-    // 6) NIP constante
-    $new.find('.nip-field').val('1234');
-
-    // 7) REQ. CAMBIO NIP siempre marcado
-    $new.find('.req-nip-checkbox').prop('checked', true);
-
-    // 8) Reactivar autocomplete en nueva fila
-    initAutocomplete($new.find('.compania-autocomplete'));
-
-    // 9) Insertar
-    $tbody.append($new);
-  };
-
-  // — ELIMINAR RENGLÓN —
-  window.borrarRenglones = function() {
-    const $rows = $tbody.find('tr');
-    if ($rows.length > 1) {
-      $rows.last().remove();
-      rowCounter--;  // opcional: mantener el contador en línea
+      });
     }
-  };
+    // inicializar al enfocar
+    $(document).on('focus', '.compania-autocomplete', function(){
+      initAutocomplete($(this));
+    });
 
-});
+    // ── Carga contratos para la fila ────────────────────────────
+    function loadContracts($row, companyId) {
+      const $sel = $row.find('.contrato-select')
+                       .empty()
+                       .append('<option value="">-- Selecciona contrato --</option>');
+      $.getJSON(`${window.API_URL}?ajax=companyContracts&companyId=${encodeURIComponent(companyId)}`)
+        .done(data => {
+          if (data.error) {
+            $sel.append('<option value="">Error al cargar contratos</option>');
+            return;
+          }
+          data.forEach(c => {
+            $sel.append(
+              `<option value="${c.Id}" data-code="${c.Code}">
+                 ${c.Code} – ${c.Description}
+               </option>`
+            );
+          });
+        })
+        .fail(() => {
+          $sel.append('<option value="">Error de red al cargar contratos</option>');
+        });
+    }
+
+    // ── Validación de etiqueta ──────────────────────────────────
+    $(document).on('blur', '.etiqueta-input', function(){
+      const $i  = $(this);
+      const val = $i.val().replace(/[^0-9\-]/g,'');
+      if (!val) return;
+      $.getJSON(`${window.API_URL}?ajax=checkIdentificador&label=${encodeURIComponent(val)}`)
+        .done(d => $i.val(val + (d.exists ? ' ❌' : ' ✅')))
+        .fail(()  =>   $i.val(val + ' ❌'));
+    });
+
+    // ── Lectura continua de UID ────────────────────────────────
+    $(document)
+      .on('focus', '.uid-field', function(){ activeUID = this; })
+      .on('blur',  '.uid-field', function(){ activeUID = null; });
+
+    setInterval(() => {
+      if (!activeUID) return;
+      fetch('../uid.txt?cache=' + Date.now())
+        .then(r => r.text())
+        .then(txt => {
+          const uid = txt.trim();
+          if (uid && uid !== lastUID) {
+            lastUID = uid;
+            const $u = $(activeUID).val(uid);
+            // validamos sin iconos
+            $.getJSON(`${window.API_URL}?ajax=checkIdentificador&track=${encodeURIComponent(uid)}`)
+              .done(d => $u.val(uid))
+              .fail(()  => $u.val(uid));
+          }
+        });
+    }, 1000);
+
+    // ── Actualizar modelo según tipo ───────────────────────────
+    window.actualizarModelo = sel => {
+      const v = sel.value.toUpperCase();
+      const m = sel.closest('tr').querySelector('.modelo-input');
+      m.value = v==='TAG'      ? 'TAG ATIONET'
+              : v==='TARJETA'  ? 'TARJETA ATIONET'
+              : '';
+    };
+
+    // ── Agregar / Borrar renglones ─────────────────────────────
+    function agregarRenglon(){
+      rowCounter++;
+      const $last = $('#tablaIdentificadores tbody tr:last');
+      const $new  = $last.clone().attr('id','row-'+rowCounter);
+
+      // heredar tipo/modelo/programa
+      ['tipo-select','modelo-input','programa-select'].forEach(cls=>{
+        $new.find('.'+cls).val($last.find('.'+cls).val());
+      });
+      $new.find('.tipo-uso-input').val('FLOTILLA');
+
+      // heredar compañía/contrato
+      const $cLast = $last.find('.compania-autocomplete'),
+            $tLast = $last.find('.contrato-select');
+      $new.find('.compania-autocomplete')
+          .val($cLast.val())
+          .data('companyId',$cLast.data('companyId'));
+      $new.find('.contrato-select')
+          .html($tLast.html())
+          .val($tLast.val());
+
+      // nueva etiqueta
+      const parts = $last.find('.etiqueta-input').val().split('-'),
+            num   = parseInt(parts.pop(),10) + 1;
+      parts.push(String(num).padStart(4,'0'));
+      $new.find('.etiqueta-input').val(parts.join('-'));
+
+      // limpiar UID / NIP / checkbox
+      $new.find('.uid-field').val('');
+      $new.find('.nip-field').val('1234');
+      $new.find('.req-nip-checkbox').prop('checked', true);
+
+      initAutocomplete($new.find('.compania-autocomplete'));
+      $('#tablaIdentificadores tbody').append($new);
+    }
+    function borrarRenglones(){
+      const $rows = $('#tablaIdentificadores tbody tr');
+      if ($rows.length > 1) {
+        $rows.last().remove();
+        rowCounter--;
+      }
+    }
+
+    // ── Crear Identificadores ──────────────────────────────
+    function crearIdentificadores(){
+      const items = [];
+      const TYPE_MAP = {
+        'TARJETA': {
+          type: 0,
+          typeModelId: '6ebbe762-3a33-40cb-8d92-088f5f34bef9',
+          typeModelDescription: 'TARJETA ATIONET'
+        },
+        'TAG': {
+          type: 1,
+          typeModelId: '1ab9115d-0c84-4b87-8b65-bc974ce2432e',
+          typeModelDescription: 'TAG RFID'
+        }
+      };
+      const PROGRAM_MAP = {
+        'CLASSIC': {
+          programId: '4c56bc46-0553-43be-95d9-314a4dc70e0c',
+          programDescription: 'Classic'
+        },
+        'TOKENGAS': {
+          programId: '5ec6131c-3dfd-4d60-a0bd-4ec0bd24451d',
+          programDescription: 'tokengas sinmex'
+        }
+      };
+
+      $('#tablaIdentificadores tbody tr').each(function(){
+        const $r      = $(this),
+              tipoStr = $r.find('.tipo-select').val(),
+              tCfg    = TYPE_MAP[tipoStr] || {},
+              progStr = $r.find('.programa-select').val(),
+              pCfg    = PROGRAM_MAP[progStr] || {},
+              $opt    = $r.find('.contrato-select option:selected'),
+              rawTrack= $r.find('.uid-field').val() || '',
+              track   = rawTrack.replace(/[^A-Za-z0-9]/g,'').trim();
+
+        items.push({
+          NetworkId:            window.NETWORK_ID,
+          UseType:              0,
+          Type:                 tCfg.type,
+          TypeModelId:          tCfg.typeModelId,
+          TypeModelDescription: tCfg.typeModelDescription,
+          ProgramId:            pCfg.programId,
+          ProgramDescription:   pCfg.programDescription,
+          IdCompany:            $r.find('.compania-autocomplete').data('companyId') || null,
+          ContractId:           $opt.val() || null,
+          ContractCode:         $opt.data('code') || null,
+          Label:                $r.find('.etiqueta-input').val().replace(/[^0-9\-]/g,''),
+          TrackNumber:          track,
+          PAN:                  $r.find('.etiqueta-input').val().replace(/-/g,''),
+          PIN:                  $r.find('.nip-field').val().trim(),
+          RequiresPINChange:    $r.find('.req-nip-checkbox').is(':checked'),
+          Active:               true
+        });
+      });
+
+      console.log('🌐 [crearIdentificadores] Payload:', items);
+      Swal.fire({ title:'Enviando…', didOpen(){ Swal.showLoading(); } });
+
+      $.ajax({
+        url: `${window.API_URL}?ajax=createIdentificadores`,
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ items })
+      })
+      .done(res=>{
+        console.log('✅ [crearIdentificadores] OK:', res);
+        Swal.fire('¡Listo!','Identificadores creados con éxito.','success');
+      })
+      .fail((xhr, st, err)=>{
+        console.error('❌ [crearIdentificadores] Error:', st, err, xhr.responseText);
+        Swal.fire('Error','No se pudieron crear los identificadores.','error');
+      });
+    }
+
+    // ── Exportar CSV ───────────────────────────────────────
+    function exportarCSV(){
+      let csv = 'Etiqueta,Track\n';
+      $('#tablaIdentificadores tbody tr').each(function(){
+        const e = $(this).find('.etiqueta-input').val().trim(),
+              t = $(this).find('.uid-field').val().trim();
+        csv += `"${e.replace(/"/g,'""')}","${t.replace(/"/g,'""')}"\n`;
+      });
+      const blob = new Blob([csv],{ type:'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href     = URL.createObjectURL(blob);
+      link.download = 'identificadores.csv';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // ── Bind de botones ────────────────────────────────────
+    $('#btnAgregar').on('click', agregarRenglon);
+    $('#btnBorrar').on('click', borrarRenglones);
+    $('#btnCrear').on('click', crearIdentificadores);
+    $('#btnExportarExcel').on('click', exportarCSV);
+  });
+})(jQuery);
