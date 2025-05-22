@@ -32,6 +32,7 @@
         }
       });
     }
+    // inicializar al enfocar
     $(document).on('focus', '.compania-autocomplete', function(){
       initAutocomplete($(this));
     });
@@ -84,9 +85,10 @@
           if (uid && uid !== lastUID) {
             lastUID = uid;
             const $u = $(activeUID).val(uid);
+            // validamos sin iconos
             $.getJSON(`${window.API_URL}?ajax=checkIdentificador&track=${encodeURIComponent(uid)}`)
-              .done(d => $u.val(uid))   // ya no concatenamos iconos
-              .fail(() => $u.val(uid));
+              .done(d => $u.val(uid))
+              .fail(()  => $u.val(uid));
           }
         });
     }, 1000);
@@ -133,9 +135,7 @@
       $new.find('.nip-field').val('1234');
       $new.find('.req-nip-checkbox').prop('checked', true);
 
-      // re-init autocomplete en nueva fila
       initAutocomplete($new.find('.compania-autocomplete'));
-
       $('#tablaIdentificadores tbody').append($new);
     }
     function borrarRenglones(){
@@ -179,27 +179,27 @@
               progStr = $r.find('.programa-select').val(),
               pCfg    = PROGRAM_MAP[progStr] || {},
               $opt    = $r.find('.contrato-select option:selected'),
-              // limpiar iconos de track:
-              rawTrack = $r.find('.uid-field').val() || '',
-              track    = rawTrack.replace(/[^A-Za-z0-9]/g,'').trim();
+              rawTrack= $r.find('.uid-field').val() || '',
+              track   = rawTrack.replace(/[^A-Za-z0-9]/g,'').trim();
 
         items.push({
-          NetworkId:               window.NETWORK_ID,
-          UseType:                 0,
-          Type:                    tCfg.type,
-          TypeModelId:             tCfg.typeModelId,
-          TypeModelDescription:    tCfg.typeModelDescription,
-          ProgramId:               pCfg.programId,
-          ProgramDescription:      pCfg.programDescription,
-          IdCompany:               $r.find('.compania-autocomplete').data('companyId') || null,
-          ContractId:              $opt.val()    || null,
-          ContractCode:            $opt.data('code') || null,
-          Label:                   $r.find('.etiqueta-input').val().replace(/[^0-9\-]/g,''),
-          TrackNumber:             track,
-          PAN:                     $r.find('.etiqueta-input').val().replace(/-/g,''),
-          PIN:                     $r.find('.nip-field').val().trim(),
-          RequiresPINChange:       $r.find('.req-nip-checkbox').is(':checked'),
-          Active:                  true
+          NetworkId:            window.NETWORK_ID,
+          UseType:              0,
+          State:                7,
+          Type:                 tCfg.type,
+          TypeModelId:          tCfg.typeModelId,
+          TypeModelDescription: tCfg.typeModelDescription,
+          ProgramId:            pCfg.programId,
+          ProgramDescription:   pCfg.programDescription,
+          IdCompany:            $r.find('.compania-autocomplete').data('companyId') || null,
+          ContractId:           $opt.val() || null,
+          ContractCode:         $opt.data('code') || null,
+          Label:                $r.find('.etiqueta-input').val().replace(/[^0-9\-]/g,''),
+          TrackNumber:          track,
+          PAN:                  $r.find('.etiqueta-input').val().replace(/-/g,''),
+          PIN:                  $r.find('.nip-field').val().trim(),
+          RequiresPINChange:    $r.find('.req-nip-checkbox').is(':checked'),
+          Active:               true
         });
       });
 
@@ -207,18 +207,18 @@
       Swal.fire({ title:'Enviando…', didOpen(){ Swal.showLoading(); } });
 
       $.ajax({
-        url: 'postidentificadores.php?ajax=createIdentificadores',
+        url: `${window.API_URL}?ajax=createIdentificadores`,
         method: 'POST',
         contentType: 'application/json',
         data: JSON.stringify({ items })
       })
-      .done(res => {
+      .done(res=>{
         console.log('✅ [crearIdentificadores] OK:', res);
-        Swal.fire('¡Listo!','Identificadores creados.','success');
+        Swal.fire('¡Listo!','Identificadores creados con éxito.','success');
       })
-      .fail((xhr, status, err) => {
-        console.error('❌ [crearIdentificadores] Error:', status, err, xhr.responseText);
-        Swal.fire('Error','No se pudieron crear.','error');
+      .fail((xhr, st, err)=>{
+        console.error('❌ [crearIdentificadores] Error:', st, err, xhr.responseText);
+        Swal.fire('Error','No se pudieron crear los identificadores.','error');
       });
     }
 
@@ -232,8 +232,8 @@
       });
       const blob = new Blob([csv],{ type:'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
-      link.href    = URL.createObjectURL(blob);
-      link.download= 'identificadores.csv';
+      link.href     = URL.createObjectURL(blob);
+      link.download = 'identificadores.csv';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
