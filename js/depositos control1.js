@@ -11,6 +11,16 @@ $(function() {
       maximumFractionDigits: 2
     });
 
+    // ——— COMISIONES ESPECIALES POR CONTRATO ———
+const contratosConComisionEspecial = {
+  '1122-0421-0000159': 0.0042, // 0.42%
+  '1122-0421-0000160': 0.0042, // 0.42%
+  '1122-0421-0000161': 0.0042, // 0.42%
+  '1122-0421-0000162': 0.0042, // 0.42%
+
+  
+};
+
   // ——— REFERENCIAS AL DOM ———
   const $companyInput      = $('#compania');
   const $totalInput        = $('#total');
@@ -64,18 +74,38 @@ $(function() {
 
   // ——— FORMATO DE TOTAL ———
   $totalInput
-    .attr({ type: 'text', inputmode: 'decimal' })
-    .on('keypress', e => { if (!/[0-9.]|\b/.test(e.key)) e.preventDefault(); })
-    .on('blur input', function(e) {
-      let val = parseNumber($(this).val());
-      if (val < 0) val = 0;
-      if (e.type === 'blur') $(this).val(formatCurrency(val));
-      recalcSaldo();
-      const companyId = $companyInput.data('companyId');
-      if (val > 0 && companyId) {
-        $.getJSON(`?ajax=companyContracts&companyId=${companyId}`, renderContracts);
-      }
-    });
+  .attr({ type: 'text', inputmode: 'decimal' })
+  .on('input blur paste', function(e) {
+    let raw = $(this).val();
+
+    if (e.type === 'paste') {
+      e.preventDefault();
+      raw = (e.originalEvent || e).clipboardData.getData('text/plain');
+    }
+
+    // Limpiar: solo números y un punto decimal
+    let cleaned = raw.replace(/[^0-9.]/g, '');
+    const parts = cleaned.split('.');
+    if (parts.length > 2) {
+      cleaned = parts[0] + '.' + parts[1];
+    }
+
+    let val = parseNumber(cleaned);
+    if (val < 0) val = 0;
+
+    if (e.type === 'blur' || e.type === 'paste') {
+      $(this).val(formatCurrency(val));
+    } else {
+      $(this).val(cleaned);
+    }
+
+    recalcSaldo();
+
+    const companyId = $companyInput.data('companyId');
+    if (val > 0 && companyId) {
+      $.getJSON(`?ajax=companyContracts&companyId=${companyId}`, renderContracts);
+    }
+  });
 
   // ——— RENDERIZAR CONTRATOS ———
   function renderContracts(contracts) {
@@ -90,8 +120,8 @@ $(function() {
         <tr data-company-code="${c.CompanyCode}" data-code="${c.Code}" data-requires-commission="${requiresComm}">
           <td><input type="checkbox" class="contratoCheck"></td>
           <td>${c.Code}</td>
-          <td>${c.ContractDescription}</td>
-          <td><input type="text" class="monto-input form-control form-control-sm" disabled></td>
+          <td>${c.Description}</td>
+<td><input type="text" class="monto-input form-control form-control-sm" disabled inputmode="decimal" pattern="[0-9]*" /></td>
           <td><input type="checkbox" class="comisionCheck" disabled></td>
           <td><input type="checkbox" class="incluyeComisionCheck" disabled title="Depósito incluye comisión e IVA"></td>
         </tr>`;
@@ -127,12 +157,37 @@ $(function() {
       $(this).val(formatCurrency(recalcSaldo()));
       recalcSaldo();
     })
-    .on('input blur', '.monto-input', function(e) {
-      if (e.type === 'blur') {
-        $(this).val(formatCurrency(parseNumber($(this).val())));
+    .on('input blur paste', '.monto-input', function(e) {
+      let raw = $(this).val();
+    
+      // Si es evento de pegado, usa el valor del portapapeles
+      if (e.type === 'paste') {
+        e.preventDefault();
+        const paste = (e.originalEvent || e).clipboardData.getData('text/plain');
+        raw = paste;
       }
+    
+      // Limpiar $ y comas, dejar solo números y un punto
+      let cleaned = raw.replace(/[^0-9.]/g, '');
+    
+      // Solo un punto decimal permitido
+      const parts = cleaned.split('.');
+      if (parts.length > 2) {
+        cleaned = parts[0] + '.' + parts[1];
+      }
+    
+      const numeric = parseNumber(cleaned);
+    
+      // Mostrar formateado si es blur o paste
+      if (e.type === 'blur' || e.type === 'paste') {
+        $(this).val(formatCurrency(numeric));
+      } else {
+        $(this).val(cleaned);
+      }
+    
       recalcSaldo();
     })
+    
     .on('click', '.comisionCheck', function() {
       $contractsTbody.find('.comisionCheck').not(this).prop('checked', false);
       $contractsTbody.find('.incluyeComisionCheck').prop('checked', false);
@@ -256,7 +311,9 @@ $(function() {
       // 2.2) Calcular comisión+IVA sobre totalGlobal y asociar al contrato marcado
       const codeIncl = $includeRow.data('code');
       const companyIncl = $includeRow.data('companyCode');
-      const pctIncl = parseInt((codeIncl.split('-')[1]||'00').substring(0,2),10)/10/100;
+      const pctIncl = contratosConComisionEspecial[codeIncl] !== undefined
+      ? contratosConComisionEspecial[codeIncl]
+       : parseInt((codeIncl.split('-')[1] || '00').substring(0, 2), 10) / 10 / 100;
       const base = totalGlobal / (1 + pctIncl * 1.16);
       const com = parseFloat((totalGlobal - base).toFixed(2));
       calls.push(sendPayload({ SubscriberCode: '2F4', ActionCode: 907, CompanyCode: companyIncl, ContractCode: codeIncl, Amount: com, CurrencyCode: 'MXN', Description: `COM${description}` }));
@@ -284,7 +341,9 @@ $(function() {
       if ($commRow.length) {
         const codeComm = $commRow.data('code');
         const companyComm = $commRow.data('companyCode');
-        const pct = parseInt((codeComm.split('-')[1]||'00').substring(0,2),10)/10/100;
+        const pct = contratosConComisionEspecial[codeComm] !== undefined
+        ? contratosConComisionEspecial[codeComm]
+        : parseInt((codeComm.split('-')[1] || '00').substring(0, 2), 10) / 10 / 100;
         const com = parseFloat((totalGlobal * pct * 1.16).toFixed(2));
         calls.push(sendPayload({
           SubscriberCode: '2F4',
@@ -338,10 +397,12 @@ $(function() {
     if (!anyChecked) {
       return Swal.fire('Error','Selecciona al menos un contrato','warning');
     }
-    if (recalcSaldo() !== 0) {
-      return Swal.fire('Error',`Falta asignar (${formatCurrency(recalcSaldo())})`,'warning');
+    const saldoActual = recalcSaldo();
+    if (Math.abs(saldoActual) > 0.01) {
+      return Swal.fire('Error', `Falta asignar (${formatCurrency(saldoActual)})`, 'warning');
     }
 
+    
     // validar número vacío
     if (extraEmpty) {
       return Swal.fire({
@@ -356,21 +417,76 @@ $(function() {
     confirmCommissionAndRun();
 
     function confirmCommissionAndRun() {
-      // si no es pago de comisión, hay contratos con comisión y no marcó checkbox
       const needsComm = $contractsTbody.find('tr')
-        .filter((_,r)=>$(r).data('requires-commission') && $(r).find('.contratoCheck').is(':checked')).length>0;
-      const markedComm = $contractsTbody.find('.comisionCheck:checked').length>0;
+        .filter((_, r) => $(r).data('requires-commission') && $(r).find('.contratoCheck').is(':checked')).length > 0;
+      const markedComm = $contractsTbody.find('.comisionCheck:checked').length > 0;
+      const $incluyeRow = $contractsTbody.find('.incluyeComisionCheck:checked').closest('tr');
+    
+      // 🚨 Validación si "Depósito con Comisión" está marcado
+      if ($incluyeRow.length) {
+        const total = parseNumber($totalInput.val());
+        const codeIncl = $incluyeRow.data('code');
+        const pctIncl = parseInt((codeIncl.split('-')[1] || '00').substring(0, 2), 10) / 10 / 100;
+        const base = total / (1 + pctIncl * 1.16);
+        const com = parseFloat((total - base).toFixed(2));
+        const neto = parseFloat(base.toFixed(2));
+    
+        return Swal.fire({
+          icon: 'info',
+          title: 'Depósito con Comisión',
+          html: `
+            <b>Total ingresado:</b> $${formatCurrency(total)}<br>
+            <b>Monto neto:</b> $${formatCurrency(neto)}<br>
+            <b>Comisión + IVA:</b> $${formatCurrency(com)}<br><br>
+            ¿Deseas continuar?
+          `,
+          showCancelButton: true,
+          confirmButtonText: 'Sí, enviar',
+          cancelButtonText: 'No, revisar'
+        }).then(r => {
+          if (r.isConfirmed) executeRequests(desc);
+        });
+      }
+    
+      // Validación si se requiere comisión y no se marcó checkbox
       if (!$commissionSwitch.is(':checked') && needsComm && !markedComm) {
         return Swal.fire({
-          icon:'warning',
-          title:'Falta aplicar comisión',
-          text:'¿Continuar sin incluirla?',
-          showCancelButton:true,
-          confirmButtonText:'Sí, continuar',
-          cancelButtonText:'No, revisar'
-        }).then(r=>{ if(r.isConfirmed) executeRequests(desc); });
+          icon: 'warning',
+          title: 'Falta aplicar comisión',
+          text: '¿Continuar sin incluirla?',
+          showCancelButton: true,
+          confirmButtonText: 'Sí, continuar',
+          cancelButtonText: 'No, revisar'
+        }).then(r => { if (r.isConfirmed) executeRequests(desc); });
       }
-      executeRequests(desc);
+    
+      // Si no aplica ninguna condición anterior, ejecuta normalmente
+      const companiaNombre = $companyInput.val();
+const contrato = $contractsTbody.find('.contratoCheck:checked').first().closest('tr').data('code');
+const monto = parseNumber($totalInput.val());
+const comision = $contractsTbody.find('.comisionCheck:checked, .incluyeComisionCheck:checked').length ? 'Sí' : 'No';
+const fecha = new Date().toLocaleString('es-MX');
+
+executeRequests(desc).then(() => {
+  $.ajax({
+    url: '../php/notificaciondep.php',
+    method: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify({
+      compania: companiaNombre,
+      contrato: contrato,
+      monto: monto.toFixed(2),
+      comision: comision,
+      fecha: fecha
+    })
+  }).then(() => {
+    Swal.fire('Correo Enviado', 'Se ha enviado el correo de confirmación a la empresa.', 'success');
+  }).catch(() => {
+    Swal.fire('Aviso', 'El depósito fue exitoso, pero no se pudo enviar el correo de confirmación.', 'info');
+  });
+});
+
     }
+    
   });
 });

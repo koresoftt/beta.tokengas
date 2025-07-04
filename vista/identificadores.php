@@ -21,7 +21,7 @@ $token     = $_SESSION['access_token'];
 
 // 2) Si viene AJAX, manejamos todas las rutas aquí
 if (isset($_GET['ajax'])) {
-    header('Content-Type: application/json; charset=UTF-8');
+    header('Content-Type: application/json; charset=UTF-8');  
 
     switch ($_GET['ajax']) {
 

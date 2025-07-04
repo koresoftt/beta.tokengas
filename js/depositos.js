@@ -11,6 +11,16 @@ $(function() {
       maximumFractionDigits: 2
     });
 
+    // ——— COMISIONES ESPECIALES POR CONTRATO ———
+const contratosConComisionEspecial = {
+  '1122-0421-0000159': 0.0042, // 0.42%
+  '1122-0421-0000160': 0.0042, // 0.42%
+  '1122-0421-0000161': 0.0042, // 0.42%
+  '1122-0421-0000162': 0.0042, // 0.42%
+
+  
+};
+
   // ——— REFERENCIAS AL DOM ———
   const $companyInput      = $('#compania');
   const $totalInput        = $('#total');
@@ -97,8 +107,11 @@ $(function() {
     }
   });
 
+let contratosCargados = [];
+
   // ——— RENDERIZAR CONTRATOS ———
   function renderContracts(contracts) {
+    contratosCargados = contracts; 
     if (!Array.isArray(contracts) || contracts.length === 0) {
       $contractsTbody.html('<tr><td colspan="6" class="text-center">No se encontraron contratos.</td></tr>');
       return;
@@ -301,7 +314,9 @@ $(function() {
       // 2.2) Calcular comisión+IVA sobre totalGlobal y asociar al contrato marcado
       const codeIncl = $includeRow.data('code');
       const companyIncl = $includeRow.data('companyCode');
-      const pctIncl = parseInt((codeIncl.split('-')[1]||'00').substring(0,2),10)/10/100;
+      const pctIncl = contratosConComisionEspecial[codeIncl] !== undefined
+      ? contratosConComisionEspecial[codeIncl]
+       : parseInt((codeIncl.split('-')[1] || '00').substring(0, 2), 10) / 10 / 100;
       const base = totalGlobal / (1 + pctIncl * 1.16);
       const com = parseFloat((totalGlobal - base).toFixed(2));
       calls.push(sendPayload({ SubscriberCode: '2F4', ActionCode: 907, CompanyCode: companyIncl, ContractCode: codeIncl, Amount: com, CurrencyCode: 'MXN', Description: `COM${description}` }));
@@ -329,7 +344,9 @@ $(function() {
       if ($commRow.length) {
         const codeComm = $commRow.data('code');
         const companyComm = $commRow.data('companyCode');
-        const pct = parseInt((codeComm.split('-')[1]||'00').substring(0,2),10)/10/100;
+        const pct = contratosConComisionEspecial[codeComm] !== undefined
+        ? contratosConComisionEspecial[codeComm]
+        : parseInt((codeComm.split('-')[1] || '00').substring(0, 2), 10) / 10 / 100;
         const com = parseFloat((totalGlobal * pct * 1.16).toFixed(2));
         calls.push(sendPayload({
           SubscriberCode: '2F4',
@@ -403,52 +420,97 @@ $(function() {
     confirmCommissionAndRun();
 
     function confirmCommissionAndRun() {
-      const needsComm = $contractsTbody.find('tr')
-        .filter((_, r) => $(r).data('requires-commission') && $(r).find('.contratoCheck').is(':checked')).length > 0;
-      const markedComm = $contractsTbody.find('.comisionCheck:checked').length > 0;
-      const $incluyeRow = $contractsTbody.find('.incluyeComisionCheck:checked').closest('tr');
-    
-      // 🚨 Validación si "Depósito con Comisión" está marcado
-      if ($incluyeRow.length) {
-        const total = parseNumber($totalInput.val());
-        const codeIncl = $incluyeRow.data('code');
-        const pctIncl = parseInt((codeIncl.split('-')[1] || '00').substring(0, 2), 10) / 10 / 100;
-        const base = total / (1 + pctIncl * 1.16);
-        const com = parseFloat((total - base).toFixed(2));
-        const neto = parseFloat(base.toFixed(2));
-    
-        return Swal.fire({
-          icon: 'info',
-          title: 'Depósito con Comisión',
-          html: `
-            <b>Total ingresado:</b> $${formatCurrency(total)}<br>
-            <b>Monto neto:</b> $${formatCurrency(neto)}<br>
-            <b>Comisión + IVA:</b> $${formatCurrency(com)}<br><br>
-            ¿Deseas continuar?
-          `,
-          showCancelButton: true,
-          confirmButtonText: 'Sí, enviar',
-          cancelButtonText: 'No, revisar'
-        }).then(r => {
-          if (r.isConfirmed) executeRequests(desc);
-        });
-      }
-    
-      // Validación si se requiere comisión y no se marcó checkbox
-      if (!$commissionSwitch.is(':checked') && needsComm && !markedComm) {
-        return Swal.fire({
-          icon: 'warning',
-          title: 'Falta aplicar comisión',
-          text: '¿Continuar sin incluirla?',
-          showCancelButton: true,
-          confirmButtonText: 'Sí, continuar',
-          cancelButtonText: 'No, revisar'
-        }).then(r => { if (r.isConfirmed) executeRequests(desc); });
-      }
-    
-      // Si no aplica ninguna condición anterior, ejecuta normalmente
-      executeRequests(desc);
-    }
+  const needsComm = $contractsTbody.find('tr')
+    .filter((_, r) => $(r).data('requires-commission') && $(r).find('.contratoCheck').is(':checked')).length > 0;
+  const markedComm = $contractsTbody.find('.comisionCheck:checked').length > 0;
+  const $incluyeRow = $contractsTbody.find('.incluyeComisionCheck:checked').closest('tr');
+
+  const companiaNombre = $companyInput.val();
+  const contrato = $contractsTbody.find('.contratoCheck:checked').first().closest('tr').data('code');
+  const monto = parseNumber($totalInput.val());
+  const fecha = new Date().toLocaleString('es-MX');
+
+  // ——— Calcular comisión real ———
+  const $comRow = $contractsTbody.find('.comisionCheck:checked, .incluyeComisionCheck:checked').closest('tr').first();
+  let comisionReal = 0;
+
+  if ($comRow.length) {
+    const code = $comRow.data('code');
+    const pct = contratosConComisionEspecial[code] !== undefined
+      ? contratosConComisionEspecial[code]
+      : parseInt((code.split('-')[1] || '00').substring(0, 2), 10) / 10 / 100;
+
+    const incluye = $comRow.find('.incluyeComisionCheck').is(':checked');
+    comisionReal = incluye
+      ? parseFloat((monto - (monto / (1 + pct * 1.16))).toFixed(2))
+      : parseFloat((monto * pct * 1.16).toFixed(2));
+  }
+
+  // 🚨 Validación si "Depósito con Comisión" está marcado
+  if ($incluyeRow.length) {
+    const codeIncl = $incluyeRow.data('code');
+    const pctIncl = contratosConComisionEspecial[codeIncl] !== undefined
+      ? contratosConComisionEspecial[codeIncl]
+      : parseInt((codeIncl.split('-')[1] || '00').substring(0, 2), 10) / 10 / 100;
+    const base = monto / (1 + pctIncl * 1.16);
+    const com = parseFloat((monto - base).toFixed(2));
+    const neto = parseFloat(base.toFixed(2));
+
+    return Swal.fire({
+      icon: 'info',
+      title: 'Depósito con Comisión',
+      html: `
+        <b>Total ingresado:</b> $${formatCurrency(monto)}<br>
+        <b>Monto neto:</b> $${formatCurrency(neto)}<br>
+        <b>Comisión + IVA:</b> $${formatCurrency(com)}<br><br>
+        ¿Deseas continuar?
+      `,
+      showCancelButton: true,
+      confirmButtonText: 'Sí, enviar',
+      cancelButtonText: 'No, revisar'
+    }).then(r => {
+      if (r.isConfirmed) ejecutarConCorreo();
+    });
+  }
+
+  if (!$commissionSwitch.is(':checked') && needsComm && !markedComm) {
+    return Swal.fire({
+      icon: 'warning',
+      title: 'Falta aplicar comisión',
+      text: '¿Continuar sin incluirla?',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, continuar',
+      cancelButtonText: 'No, revisar'
+    }).then(r => {
+      if (r.isConfirmed) ejecutarConCorreo();
+    });
+  }
+
+  ejecutarConCorreo();
+
+  function ejecutarConCorreo() {
+    executeRequests(`${$('#tbFecha').val()}-${$('#tbExtra').val()}`).then(() => {
+      $.ajax({
+        url: '/beta.tokengas/PHP/notificaciondep.php',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+          compania: companiaNombre,
+          contrato: contrato,
+          monto: monto.toFixed(2),
+          comision: comisionReal.toFixed(2),
+          fecha: fecha,
+          CompanyContracts: contratosCargados
+        })
+      }).then(() => {
+        Swal.fire('Correo Enviado', 'Se ha enviado el correo de confirmación a la empresa.', 'success');
+      }).catch(() => {
+        Swal.fire('Aviso', 'El depósito fue exitoso, pero no se pudo enviar el correo de confirmación.', 'info');
+      });
+    });
+  }
+}
+
     
   });
 });
