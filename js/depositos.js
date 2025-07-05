@@ -488,27 +488,56 @@ let contratosCargados = [];
 
   ejecutarConCorreo();
 
-  function ejecutarConCorreo() {
-    executeRequests(`${$('#tbFecha').val()}-${$('#tbExtra').val()}`).then(() => {
-      $.ajax({
-        url: '/beta.tokengas/PHP/notificaciondep.php',
-        method: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify({
-          compania: companiaNombre,
-          contrato: contrato,
-          monto: monto.toFixed(2),
-          comision: comisionReal.toFixed(2),
-          fecha: fecha,
-          CompanyContracts: contratosCargados
-        })
-      }).then(() => {
-        Swal.fire('Correo Enviado', 'Se ha enviado el correo de confirmación a la empresa.', 'success');
-      }).catch(() => {
-        Swal.fire('Aviso', 'El depósito fue exitoso, pero no se pudo enviar el correo de confirmación.', 'info');
+  
+
+ function ejecutarConCorreo() {
+  // Preparar datos antes de que el formulario se reinicie
+  const detallesDeposito = [];
+  const compania = $companyInput.val();
+  const contratoPrincipal = $contractsTbody.find('.contratoCheck:checked').first().closest('tr').data('code');
+  const montoTotal = parseNumber($totalInput.val()).toFixed(2);
+  const fechaActual = new Date().toLocaleString('es-MX');
+
+  $contractsTbody.find('.contratoCheck:checked').each(function () {
+    const $row = $(this).closest('tr');
+    const code = $row.data('code');
+    const descripcion = $row.find('td:nth-child(3)').text().trim();
+    const montoAsignado = parseNumber($row.find('.monto-input').val());
+
+    if (montoAsignado > 0) {
+      detallesDeposito.push({
+        contrato: code,
+        descripcion: descripcion,
+        monto: montoAsignado.toFixed(2)
       });
+    }
+  });
+
+  // Ejecutar movimientos y después enviar correo
+  executeRequests(`${$('#tbFecha').val()}-${$('#tbExtra').val()}`).then(() => {
+    $.ajax({
+      url: '/beta.tokengas/PHP/notificaciondep.php',
+      method: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify({
+        compania: compania,
+        contrato: contratoPrincipal,
+        monto: montoTotal,
+        comision: comisionReal.toFixed(2),
+        fecha: fechaActual,
+        CompanyContracts: contratosCargados,
+        Detalles: detallesDeposito
+      })
+    }).then(() => {
+      Swal.fire('Correo Enviado', 'Se ha enviado el correo de confirmación a la empresa.', 'success');
+    }).catch(() => {
+      Swal.fire('Aviso', 'El depósito fue exitoso, pero no se pudo enviar el correo de confirmación.', 'info');
     });
-  }
+  });
+}
+
+
+
 }
 
     
